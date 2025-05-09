@@ -11,8 +11,8 @@ services:
 
   extract_yfinance:
     build:
-      context: ./extract  # Path ke folder 'extract' tempat Dockerfile berada
-      dockerfile: Dockerfile
+      context: .  # Path ke folder 'extract' tempat Dockerfile berada
+      dockerfile: extract/Dockerfile
     image: extraction  # Nama image yang digunakan
     container_name: extract_yfinance
     volumes:
@@ -23,20 +23,20 @@ services:
 
   extract_idx:
     build:
-      context: ./extract  # Path ke folder 'extract' tempat Dockerfile berada
-      dockerfile: Dockerfile
-    image: extraction  # Menggunakan image yang sama dengan extract_yfinance
+      context: .  # Path to the root directory, not just extract
+      dockerfile: extract/Dockerfile
+    image: extraction
     container_name: extract_idx
     volumes:
       - ./output:/app/output
     environment:
-      IDX_OUTPUT_PATH: /app/output/idx_output.json
+      IDX_OUTPUT_PATH: /app/output/idx_extract.json
     command: ["python", "idx_extract.py"]  # Menjalankan idx_extract.py
 
   extract_iqplus:
     build:
-      context: ./extract  # Path ke folder 'extract' tempat Dockerfile berada
-      dockerfile: Dockerfile
+      context: .  # Path ke folder 'extract' tempat Dockerfile berada
+      dockerfile: extract/Dockerfile
     image: extraction  # Menggunakan image yang sama dengan extract_yfinance dan extract_idx
     container_name: extract_iqplus
     volumes:
