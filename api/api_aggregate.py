@@ -3,7 +3,6 @@ from flask_cors import CORS
 from pymongo import MongoClient
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, to_date, date_format, avg
-from pyngrok import ngrok
 import os
 
 # === Inisialisasi Flask ===
@@ -16,7 +15,7 @@ db = client["bigdata_saham"]
 collection = db["yfinance_data"]
 
 # === Set JAVA_HOME untuk Spark ===
-os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-11-openjdk-amd64"
+os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
 
 # === Inisialisasi SparkSession ===
 spark = SparkSession.builder \
@@ -26,7 +25,6 @@ spark = SparkSession.builder \
 
 def safe_float(value):
     try:
-        # Jika nilai None atau string kosong, jadikan 0.0
         return float(value) if value is not None and value != "" else 0.0
     except (ValueError, TypeError):
         return 0.0
@@ -60,19 +58,16 @@ def load_data(emiten):
                 "High": safe_float(record.get("High")),
                 "Low": safe_float(record.get("Low")),
                 "Close": safe_float(record.get("Close")),
-                # Semua numeric pakai float agar konsisten
                 "Volume": float(safe_int(record.get("Volume")))
             })
         except Exception as e:
             print(f"⚠️ Skip record rusak: {e}")
 
-
     if not data:
         print("❌ Semua record history kosong atau rusak.")
         return None
 
-    # Buat DataFrame dengan schema eksplisit
-    from pyspark.sql.types import StructType, StructField, StringType, DoubleType, DateType
+    from pyspark.sql.types import StructType, StructField, StringType, DoubleType
     schema = StructType([
         StructField("symbol", StringType(), True),
         StructField("Date", StringType(), True),
@@ -129,7 +124,6 @@ def get_harga():
             avg("Volume").alias("Volume")
         ).orderBy("period")
 
-
         result = []
         for row in agg_df.collect():
             if row["Open"] is not None:
@@ -149,9 +143,6 @@ def get_harga():
         print("❌ Gagal proses agregasi:", e)
         return jsonify({"error": "Terjadi error saat agregasi data"}), 500
 
-# === Jalankan API dengan Ngrok ===
+# === Jalankan Flask di 0.0.0.0 agar bisa diakses container/host ===
 if __name__ == '__main__':
-    port = 8080
-    public_url = ngrok.connect(port)
-    print(f"🔗 link api: {public_url}")
-    app.run(port=port)
+    app.run(host="0.0.0.0", port=5000)
