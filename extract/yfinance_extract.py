@@ -72,7 +72,7 @@ STOCKS = [
 ]
 
 # Output file path (can be configured via environment variable)
-OUTPUT_FILE_PATH = os.environ.get('YFINANCE_OUTPUT_PATH', '/tmp/yfinance_daily_data.json')
+OUTPUT_FILE_PATH = os.environ.get('YFINANCE_OUTPUT_PATH')
 
 def extract_daily_data():
     """

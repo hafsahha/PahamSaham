@@ -1,20 +1,24 @@
-FROM python:3.9-slim
+FROM python:3.11
 
-# Set working directory in the container
+# Set working directory
 WORKDIR /app
 
-# Copy requirements file and install dependencies
+# Copy requirements and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the extraction script
+# Copy all extractor scripts
 COPY yfinance_extract.py .
+# COPY idx_extract.py .
+# COPY iqplus_extract.py .
 
-# Create directory for output
-RUN mkdir -p /tmp
+# Buat folder output
+RUN mkdir -p ../output
 
-# Set environment variables (can be overridden at runtime)
-ENV YFINANCE_OUTPUT_PATH=/tmp/yfinance_daily_data.json
+# Default environment variables (bisa dioverride saat run)
+ENV YFINANCE_OUTPUT_PATH=../output/yfinance_output.json
+ENV IDX_OUTPUT_PATH=../output/idx_output.json
+ENV IQPLUS_OUTPUT_PATH=../output/iqplus_output.json
 
-# Run the script when the container launches
+# Default command — bisa diubah saat docker run
 CMD ["python", "yfinance_extract.py"]

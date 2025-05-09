@@ -10,11 +10,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the MongoDB load script
 COPY load_mongodb.py .
 
-# Create directory for input files
-RUN mkdir -p /tmp
-
 # Set environment variables (can be overridden at runtime)
-ENV YFINANCE_INPUT_PATH=/tmp/yfinance_daily_data.json
+ENV YFINANCE_INPUT_PATH=../output/yfinance_daily_data.json
 ENV MONGO_URI="mongodb+srv://coffeelatte:secretdata3@luna.sryzase.mongodb.net/"
 ENV MONGO_DB="bigdata_saham"
 ENV MONGO_COLLECTION="yfinance_data"
