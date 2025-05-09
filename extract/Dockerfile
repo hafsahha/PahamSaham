@@ -13,12 +13,12 @@ COPY yfinance_extract.py .
 # COPY iqplus_extract.py .
 
 # Buat folder output
-RUN mkdir -p ../output
+RUN mkdir -p app/output
 
 # Default environment variables (bisa dioverride saat run)
-ENV YFINANCE_OUTPUT_PATH=../output/yfinance_output.json
-ENV IDX_OUTPUT_PATH=../output/idx_output.json
-ENV IQPLUS_OUTPUT_PATH=../output/iqplus_output.json
+ENV YFINANCE_OUTPUT_PATH=app/output/yfinance_output.json
+ENV IDX_OUTPUT_PATH=app/output/idx_output.json
+ENV IQPLUS_OUTPUT_PATH=app/output/iqplus_output.json
 
 # Default command — bisa diubah saat docker run
 CMD ["python", "yfinance_extract.py"]

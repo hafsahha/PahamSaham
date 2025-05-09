@@ -1,15 +1,49 @@
-version: '3.8'
-
 services:
   api:
     build:
       context: ./api
+    image: api
+    container_name: backend_api
     ports:
-      - "8080:8080"
-    environment:
-      - JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+      - "5000:5000"
     networks:
       - saham_net
+
+  extract_yfinance:
+    build:
+      context: ./extract  # Path ke folder 'extract' tempat Dockerfile berada
+      dockerfile: Dockerfile
+    image: extraction  # Nama image yang digunakan
+    container_name: extract_yfinance
+    volumes:
+      - ./output:/app/output  # Mount folder output dari host ke container
+    environment:
+      YFINANCE_OUTPUT_PATH: /app/output/yfinance_output.json
+    command: ["python", "yfinance_extract.py"]  # Menjalankan yfinance_extract.py
+
+  extract_idx:
+    build:
+      context: ./extract  # Path ke folder 'extract' tempat Dockerfile berada
+      dockerfile: Dockerfile
+    image: extraction  # Menggunakan image yang sama dengan extract_yfinance
+    container_name: extract_idx
+    volumes:
+      - ./output:/app/output
+    environment:
+      IDX_OUTPUT_PATH: /app/output/idx_output.json
+    command: ["python", "idx_extract.py"]  # Menjalankan idx_extract.py
+
+  extract_iqplus:
+    build:
+      context: ./extract  # Path ke folder 'extract' tempat Dockerfile berada
+      dockerfile: Dockerfile
+    image: extraction  # Menggunakan image yang sama dengan extract_yfinance dan extract_idx
+    container_name: extract_iqplus
+    volumes:
+      - ./output:/app/output
+    environment:
+      IQPLUS_OUTPUT_PATH: /app/output/iqplus_output.json
+    command: ["python", "iqplus_extract.py"]  # Menjalankan iqplus_extract.py
 
 networks:
   saham_net:
