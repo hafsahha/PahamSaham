@@ -11,7 +11,7 @@ services:
 
   extract_yfinance:
     build:
-      context: .  # Path ke folder 'extract' tempat Dockerfile berada
+      context: . 
       dockerfile: extract/Dockerfile
     image: extraction  # Nama image yang digunakan
     container_name: extract_yfinance
@@ -35,7 +35,7 @@ services:
 
   extract_iqplus:
     build:
-      context: .  # Path ke folder 'extract' tempat Dockerfile berada
+      context: .  
       dockerfile: extract/Dockerfile
     image: extraction  # Menggunakan image yang sama dengan extract_yfinance dan extract_idx
     container_name: extract_iqplus
