@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./api
+    ports:
+      - "8080:8080"
+    environment:
+      - JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+    networks:
+      - saham_net
+
+networks:
+  saham_net:
+    driver: bridge
