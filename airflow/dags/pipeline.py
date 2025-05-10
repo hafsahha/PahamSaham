@@ -1,8 +1,29 @@
+import docker
+import os
 from airflow import DAG
 from airflow.providers.docker.operators.docker import DockerOperator
-from docker.types import Mount  
+from docker.types import Mount
 from datetime import datetime
 
+# Mendapatkan path host yang benar dari mount container saat ini
+client = docker.from_env()
+try:
+    # Dapatkan container saat ini berdasarkan hostname (biasanya container ID)
+    current_container = client.containers.get(os.environ['HOSTNAME'])
+    for mount in current_container.attrs['Mounts']:
+        if mount['Destination'] == '/opt/airflow/output':
+            host_output_path = mount['Source']  # Path absolut di host, misalnya /path/to/project/output
+            break
+    else:
+        raise Exception("Mount point /opt/airflow/output not found in container")
+except Exception as e:
+    print(f"Error getting host output path: {e}")
+    # Fallback ke path default jika gagal (opsional, sesuaikan dengan kebutuhan)
+    host_output_path = "/path/to/fallback/output"
+
+print("Host output path:", host_output_path)
+
+# Lanjutkan dengan definisi default_args dan DAG seperti sebelumnya
 default_args = {
     'owner': 'airflow',
     'start_date': datetime(2023, 1, 1),
@@ -16,62 +37,36 @@ with DAG(
     catchup=False,
     tags=['saham'],
 ) as dag:
-
-    # Mount path should match what's in docker-compose.yml
-    output_mount = Mount(
-        source="./output",  # This path is relative to your docker-compose.yml location
-        target="/app/output",
-        type="bind"
-    )
-
     # TASK: YFINANCE
     extract_yfinance = DockerOperator(
         task_id='extract_yfinance',
         image='extraction:latest',
         auto_remove=True,
         docker_url="unix://var/run/docker.sock",
-        network_mode="saham_net",  # Make sure this network exists
-        mount_tmp_dir=False,  # Disable temp directory mounting
-        mounts=[output_mount],
+        network_mode="saham_net",
+        mount_tmp_dir=False,
+        mounts=[
+            Mount(source=host_output_path, target='/app/output', type='bind')
+        ],
         command="python yfinance_extract.py",
-        container_name="pipeline_extract_yfinance"
+        container_name="pipeline_extract_yfinance",
+        environment={
+            'YFINANCE_OUTPUT_PATH': '/app/output/yfinance_output.json'
+        },
     )
-
+    
     load_yfinance = DockerOperator(
         task_id='load_yfinance',
         image='loader:latest',
         auto_remove=True,
         docker_url="unix://var/run/docker.sock",
         network_mode="saham_net",
-        mount_tmp_dir=False,  # Disable temp directory mounting
-        mounts=[output_mount],
+        mount_tmp_dir=False,
+        mounts=[
+            Mount(source=host_output_path, target='/app/output', type='bind')
+        ],
         command="python yfinance_load.py",
         container_name="pipeline_load_yfinance"
     )
-
-    # # TASK: IDX
-    # extract_idx = DockerOperator(
-    #     task_id='extract_idx',
-    #     image='extraction:latest',
-    #     auto_remove=True,
-    #     docker_url="unix://var/run/docker.sock",
-    #     network_mode="saham_net",
-    #     mount_tmp_dir=False,  # Disable temp directory mounting
-    #     mounts=[output_mount],
-    #     command="python idx_extract.py",
-    # )
-
-    # load_idx = DockerOperator(
-    #     task_id='load_idx',
-    #     image='loader:latest',
-    #     auto_remove=True,
-    #     docker_url="unix://var/run/docker.sock", 
-    #     network_mode="saham_net",
-    #     mount_tmp_dir=False,  # Disable temp directory mounting
-    #     mounts=[output_mount],
-    #     command="python idx_load.py",
-    # )
-
-    # SET DEPENDENSI
+    
     extract_yfinance >> load_yfinance
-    # extract_idx >> load_idx

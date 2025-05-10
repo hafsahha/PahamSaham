@@ -29,7 +29,7 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - /var/run/docker.sock:/var/run/docker.sock  # Akses Docker daemon
-      - ./output:/app/output  # Mount folder output
+      - ./output:/opt/airflow/output   # Mount folder output
     command: |
       bash -c '
         pip install --user -r /opt/airflow/requirements.txt &&
@@ -67,7 +67,7 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./output:/app/output
+      - ./output:/opt/airflow/output 
     environment:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow 
       
@@ -159,3 +159,5 @@ volumes:
 networks:
   saham_net:
     driver: bridge
+  bridge:
+    external: true 
