@@ -102,7 +102,7 @@ def download_idx_reports():
         wait = WebDriverWait(driver, 30)
 
         
-        def safe_click(xpath, description, sleep=5, next=False):
+        def safe_click(xpath, description, sleep=5):
             for attempt in range(3):
                 try:            
                     # Log the page source for debugging
@@ -117,7 +117,6 @@ def download_idx_reports():
                     time.sleep(sleep)
                     
                     # Verify element is really clickable
-                    element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
                     if not element.is_displayed() or not element.is_enabled():
                         raise Exception("Element is not interactable")
                     
@@ -128,9 +127,8 @@ def download_idx_reports():
                     time.sleep(sleep)  # Wait after click
 
                     return True
+                
                 except Exception as e:
-                    if next:
-                        return False
                     if attempt == 3:
                         logger.error(f"Failed to click {description} after 3 attempts: {str(e)}")
                         logger.error(traceback.format_exc())
@@ -173,12 +171,13 @@ def download_idx_reports():
 
                     # Pagination handling
                     try:
-                        safe_click("//button[contains(@class, 'next') and not(@disabled)]", "4. next", next=True)
-                        time.sleep(5)
+                        element = wait.until(EC.presence_of_element_located((By.XPATH, "//button[contains(@class, 'last') and not(@disabled)]")))
+                        element = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'last') and not(@disabled)]")))
+                        if not element.is_displayed() or not element.is_enabled():
+                            raise Exception("Element is not interactable")
                         
-                        screenshot_path = f"/screenshot/next.png"
-                        driver.save_screenshot(screenshot_path)
-                        logger.info(f"Saved screenshot to {screenshot_path}")
+                        element.click()
+                        
                         logger.info("Clicked next page button")
                         time.sleep(5)  # Wait for next page to load
                     except Exception as e:
