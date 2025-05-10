@@ -21,7 +21,7 @@ print("Host output path:", host_output_path)
 
 default_args = {
     'owner': 'airflow',
-    'start_date': datetime(2023, 1, 1),
+    'start_date': datetime(2025, 5, 10),
     'retries': 1
 }
 

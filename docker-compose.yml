@@ -1,5 +1,6 @@
 services:
-  postgres: # aman
+  postgres:
+    container_name: postgres-db
     image: postgres:13
     environment:
       POSTGRES_USER: airflow
@@ -10,17 +11,48 @@ services:
       - saham_net
     volumes:
       - postgres-db:/var/lib/postgresql/data
-    healthcheck:  # Tambahkan healthcheck
-      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
-      interval: 5s
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
 
-  airflow-webserver: # aman
+  airflow-init:
+    container_name: airflow-init
     image: apache/airflow:2.6.3
     depends_on:
       postgres:
-        condition: service_healthy  # Tunggu hingga PostgreSQL siap
+        condition: service_healthy
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    command: |
+      bash -c '
+        airflow db init &&
+        airflow users create \
+          --username admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@example.com \
+          --password admin
+      '
+    networks:
+      - saham_net
+
+  airflow-webserver:
+    container_name: airflow-webserver
+    image: apache/airflow:2.6.3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
     networks:
       - saham_net
     volumes:
@@ -28,25 +60,9 @@ services:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
-      - /var/run/docker.sock:/var/run/docker.sock  # Akses Docker daemon
-      - ./output:/opt/airflow/output   # Mount folder output
-    command: |
-      bash -c '
-        pip install --user -r /opt/airflow/requirements.txt &&
-        while ! airflow db check; do
-          echo "Waiting for PostgreSQL...";
-          sleep 5;
-        done;
-        airflow db init && 
-        airflow users create \
-          --username admin \
-          --firstname Admin \
-          --lastname User \
-          --role Admin \
-          --email admin@example.com \
-          --password admin &&
-        airflow webserver
-      '
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./output:/opt/airflow/output
+    command: airflow webserver
     environment:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow 
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
@@ -54,12 +70,15 @@ services:
     ports:
       - "8080:8080"
 
-  airflow-scheduler: # yg ini sebenernya perlu dibenerin lagi, dia harus run ulang manual sehabis yg webserver jalan
+  airflow-scheduler:
+    container_name: airflow-scheduler
     image: apache/airflow:2.6.3
-    command: scheduler
+    command: airflow scheduler
     depends_on:
-      - postgres
-      - airflow-webserver
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
     networks:
       - saham_net
     volumes:
@@ -70,7 +89,7 @@ services:
       - ./output:/opt/airflow/output 
     environment:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow 
-      
+
   api: #ini udh aman
     build:
       context: ./api
@@ -80,7 +99,7 @@ services:
       - "5000:5000"
     networks:
       - saham_net
-
+      
   extract_yfinance: #ini udh aman
     profiles: ["build"]
     build:
@@ -154,10 +173,8 @@ services:
     command: ["python", "yfinance_load.py"]
 
 volumes:
-  postgres-db: 
+  postgres-db:   
 
 networks:
   saham_net:
     driver: bridge
-  bridge:
-    external: true 
