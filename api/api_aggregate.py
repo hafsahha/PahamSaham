@@ -142,7 +142,6 @@ def get_harga():
     except Exception as e:
         print("❌ Gagal proses agregasi:", e)
         return jsonify({"error": "Terjadi error saat agregasi data"}), 500
-
-# === Jalankan Flask di 0.0.0.0 agar bisa diakses container/host ===
+    
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000)
