@@ -71,8 +71,8 @@ services:
     image: transformer
     container_name: transform_service
     volumes:
-      - ./output:/app/output  # Mount output directory for saving results
-      - ./extract/idx_extracted:/app/extract/idx_extracted  # Mount the extracted data
+      - ./output:/app/output  # Mount the output directory for saving results
+      - ./output/idx_extracted:/app/extract/idx_extracted  # Mount the extracted data folder from output
     command: ["python", "transform_idx.py"]  # Command to run your transform script
     depends_on:
       - extract_idx  # Ensure the extract_idx service is completed first

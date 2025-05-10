@@ -78,7 +78,7 @@ def extract_financials(xbrl_dict):
     return result
 
 # Path to the extracted folder where XBRL files are stored
-extracted_folder = '/app/extract/idx_extracted'  # Update with the correct path for Docker
+extracted_folder = '/app/output/idx_extracted'  # Update with the correct path for Docker
 
 all_data = []
 
