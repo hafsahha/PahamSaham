@@ -1,5 +1,5 @@
 services:
-  api:
+  api: #ini udh aman
     build:
       context: ./api
     image: api
@@ -9,7 +9,7 @@ services:
     networks:
       - saham_net
 
-  extract_yfinance:
+  extract_yfinance: #ini udh aman
     build:
       context: . 
       dockerfile: extract/Dockerfile
@@ -21,7 +21,7 @@ services:
       YFINANCE_OUTPUT_PATH: /app/output/yfinance_output.json
     command: ["python", "yfinance_extract.py"]  # Menjalankan yfinance_extract.py
 
-  extract_idx:
+  extract_idx: #ini udh aman
     build:
       context: .  # Path to the root directory, not just extract
       dockerfile: extract/Dockerfile
@@ -31,6 +31,8 @@ services:
       - ./output:/app/output
       - ./extract/idx_zip:/app/extract/idx_zip
       - ./extract/idx_extracted:/app/extract/idx_extracted
+      - ./output/screenshot:/screenshot
+      
     environment:
       - PYTHONUNBUFFERED=1
     deploy:
@@ -39,7 +41,7 @@ services:
           memory: 2G
     shm_size: '2G'  # Shared memory untuk Chrome
     restart: on-failure
-    command: ["python3", "idx_extract.py"]
+    command: ["python", "idx_extract.py"]
 
   extract_iqplus:
     build:
@@ -53,7 +55,7 @@ services:
       IQPLUS_OUTPUT_PATH: /app/output/iqplus_output.json
     command: ["python", "iqplus_extract.py"]  # Menjalankan iqplus_extract.py
 
-  load_yfinance:
+  load_yfinance: #ini udh aman
     build:
       context: ./load
       dockerfile: Dockerfile
