@@ -1,7 +1,7 @@
-import shutil
 import os
 import json
 from pyspark.sql import SparkSession
+import shutil
 
 # Initialize Spark session
 spark = SparkSession.builder \
@@ -123,7 +123,8 @@ spark_df.write.json(json_output_file, mode='overwrite')
 
 print(f"All data extracted and saved to {json_output_file}")
 
-# Function to clean up and remove idx_extracted folder after processing
+# Clean up the extracted folder after processing
+import shutil
 def cleanup_extracted_folder():
     """Remove extracted folder after processing"""
     try:
@@ -133,5 +134,4 @@ def cleanup_extracted_folder():
     except Exception as e:
         print(f"Error during cleanup: {str(e)}")
 
-# Call cleanup after the transformation process
 cleanup_extracted_folder()
