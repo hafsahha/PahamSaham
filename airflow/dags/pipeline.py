@@ -7,23 +7,18 @@ from datetime import datetime
 
 # Mendapatkan path host yang benar dari mount container saat ini
 client = docker.from_env()
-try:
-    # Dapatkan container saat ini berdasarkan hostname (biasanya container ID)
-    current_container = client.containers.get(os.environ['HOSTNAME'])
-    for mount in current_container.attrs['Mounts']:
-        if mount['Destination'] == '/opt/airflow/output':
-            host_output_path = mount['Source']  # Path absolut di host, misalnya /path/to/project/output
-            break
-    else:
-        raise Exception("Mount point /opt/airflow/output not found in container")
-except Exception as e:
-    print(f"Error getting host output path: {e}")
-    # Fallback ke path default jika gagal (opsional, sesuaikan dengan kebutuhan)
-    host_output_path = "/path/to/fallback/output"
 
+# Dapatkan container saat ini berdasarkan hostname
+current_container = client.containers.get(os.environ['HOSTNAME'])
+for mount in current_container.attrs['Mounts']:
+    if mount['Destination'] == '/opt/airflow/output':
+        host_output_path = mount['Source']  # Path absolut di host, misalnya /path/to/project/output
+        break
+else:
+    raise Exception("Mount point /opt/airflow/output not found in container")
+    
 print("Host output path:", host_output_path)
 
-# Lanjutkan dengan definisi default_args dan DAG seperti sebelumnya
 default_args = {
     'owner': 'airflow',
     'start_date': datetime(2023, 1, 1),
@@ -31,7 +26,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id='saham_pipeline',
+    dag_id='yfinance_pipeline',
     default_args=default_args,
     schedule_interval='@daily',
     catchup=False,

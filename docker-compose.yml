@@ -1,5 +1,5 @@
 services:
-  postgres:
+  postgres: # aman
     image: postgres:13
     environment:
       POSTGRES_USER: airflow
@@ -16,7 +16,7 @@ services:
       timeout: 5s
       retries: 10
 
-  airflow-webserver:
+  airflow-webserver: # aman
     image: apache/airflow:2.6.3
     depends_on:
       postgres:
@@ -54,7 +54,7 @@ services:
     ports:
       - "8080:8080"
 
-  airflow-scheduler:
+  airflow-scheduler: # yg ini sebenernya perlu dibenerin lagi, dia harus run ulang manual sehabis yg webserver jalan
     image: apache/airflow:2.6.3
     command: scheduler
     depends_on:
