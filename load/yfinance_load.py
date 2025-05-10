@@ -18,12 +18,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # MongoDB connection details
-MONGO_URI = os.environ.get('MONGO_URI', "mongodb+srv://coffeelatte:secretdata3@luna.sryzase.mongodb.net/")
-MONGO_DB = os.environ.get('MONGO_DB', "bigdata_saham")
-MONGO_COLLECTION = os.environ.get('MONGO_COLLECTION', "yfinance_data")
+MONGO_URI = os.environ.get('MONGO_URI')
+MONGO_DB = os.environ.get('MONGO_DB')
+MONGO_COLLECTION = os.environ.get('MONGO_COLLECTION')
 
 # Input file path (can be configured via environment variable)
-INPUT_FILE_PATH = os.environ.get('YFINANCE_INPUT_PATH', '/tmp/yfinance_daily_data.json')
+INPUT_FILE_PATH = os.environ.get('YFINANCE_INPUT_PATH')
 
 def load_to_mongodb(input_file_path=INPUT_FILE_PATH):
     """

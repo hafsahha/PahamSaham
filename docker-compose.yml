@@ -29,9 +29,17 @@ services:
     container_name: extract_idx
     volumes:
       - ./output:/app/output
+      - ./extract/idx_zip:/app/extract/idx_zip
+      - ./extract/idx_extracted:/app/extract/idx_extracted
     environment:
-      IDX_OUTPUT_PATH: /app/output/idx_extract.json
-    command: ["python", "idx_extract.py"]  # Menjalankan idx_extract.py
+      - PYTHONUNBUFFERED=1
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    shm_size: '2G'  # Shared memory untuk Chrome
+    restart: on-failure
+    command: ["python3", "idx_extract.py"]
 
   extract_iqplus:
     build:
@@ -44,6 +52,16 @@ services:
     environment:
       IQPLUS_OUTPUT_PATH: /app/output/iqplus_output.json
     command: ["python", "iqplus_extract.py"]  # Menjalankan iqplus_extract.py
+
+  load_yfinance:
+    build:
+      context: ./load
+      dockerfile: Dockerfile
+    image: loader
+    container_name: load_yfinance
+    volumes:
+      - ./output:/app/output
+    command: ["python", "yfinance_load.py"]
 
 networks:
   saham_net:
