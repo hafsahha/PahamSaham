@@ -65,18 +65,17 @@ services:
       - ./output:/app/output
     command: ["python", "yfinance_load.py"]
 
-  transform_idx:  
+  transform_idx:
     build:
-      context: ./transform  # The directory containing your transform code
-      dockerfile: Dockerfile  # Specify Dockerfile if you have one in the 'transform' directory
-    image: transformer  # Name for the transform service image
-    container_name: transform_service  # Name of the container
+      context: ./transform  # Update with your transform directory path
+    image: transformer
+    container_name: transform_service
     volumes:
-      - ./output:/app/output  # Mount output directory for transform
-      - ./extract/idx_extracted:/app/extract/idx_extracted  # Mount extracted data from idx_extract
-    command: ["python", "transform_idx.py"]  # Command to run your transform script (transform_idx.py)
+      - ./output:/app/output  # Mount the output directory for saving results
+      - ./extract/idx_extracted:/app/extract/idx_extracted  # Mount the extracted data
+    command: ["python", "transform_idx.py"]
     depends_on:
-      - extract_idx  # Ensure extract_idx service is ready before starting transform
+      - extract_idx  # Ensure extract_idx service is completed first
 
 networks:
   saham_net:
