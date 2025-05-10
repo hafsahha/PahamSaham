@@ -1,155 +1,367 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useState } from "react"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
+import { Card } from "@/components/ui/card"
 
-export default function StockChart() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+interface PriceData {
+  Symbol: string
+  Date: string
+  Open: number
+  High: number
+  Low: number
+  Close: number
+  Volume: number
+}
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+interface PriceChartProps {
+  data: PriceData[]
+}
 
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload
+    return (
+      <Card className="bg-white p-4 shadow-lg border border-gray-200">
+        <p className="font-bold text-gray-800">{data.Symbol}</p>
+        <p className="text-sm text-gray-600">Tanggal: {data.Date}</p>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
+          <p className="text-sm">
+            <span className="text-gray-500">Open:</span>{" "}
+            <span className="font-medium text-gray-500">Rp {data.Open.toLocaleString("id-ID")}</span>
+          </p>
+          <p className="text-sm">
+            <span className="text-gray-500">Close:</span>{" "}
+            <span className="font-medium text-gray-500">Rp {data.Close.toLocaleString("id-ID")}</span>
+          </p>
+          <p className="text-sm">
+            <span className="text-gray-500">High:</span>{" "}
+            <span className="font-medium text-green-600">Rp {data.High.toLocaleString("id-ID")}</span>
+          </p>
+          <p className="text-sm">
+            <span className="text-gray-500">Low:</span>{" "}
+            <span className="font-medium text-red-600">Rp {data.Low.toLocaleString("id-ID")}</span>
+          </p>
+        </div>
+        <p className="text-sm mt-1">
+          <span className="text-gray-500">Volume:</span>{" "}
+          <span className="font-medium text-gray-500">{data.Volume.toLocaleString("id-ID")}</span>
+        </p>
+      </Card>
+    )
+  }
+  return null
+}
 
-    // Set canvas dimensions
-    canvas.width = canvas.offsetWidth
-    canvas.height = canvas.offsetHeight
+export default function StockChart({ data }: PriceChartProps) {
+  const [activeDataKey, setActiveDataKey] = useState<string>("Close")
+  const [selectedRange, setSelectedRange] = useState<string>("all")
 
-    // Sample data - would come from API in real app
-    const data = [
-      9050, 9075, 9100, 9125, 9150, 9175, 9200, 9150, 9175, 9200, 9225, 9250, 9225, 9250, 9275, 9250, 9225, 9250, 9275,
-      9250,
-    ]
+  // Ensure dates are sorted chronologically
+  const sortedData = [...data].sort((a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime())
 
-    // Chart settings
-    const padding = 20
-    const chartWidth = canvas.width - padding * 2
-    const chartHeight = canvas.height - padding * 2
+  // Filter data based on selected range
+  const formattedData = filterByRange(sortedData, selectedRange)
 
-    // Find min and max values
-    const minValue = Math.min(...data) * 0.998
-    const maxValue = Math.max(...data) * 1.002
-    const valueRange = maxValue - minValue
+  const handleLegendClick = (dataKey: string) => {
+    setActiveDataKey(dataKey)
+  }
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+  // Calculate min and max values for Y axis with some padding
+  const allValues = formattedData.flatMap((item) => [item.Open, item.High, item.Low, item.Close])
+  const minValue = allValues.length > 0 ? Math.min(...allValues) * 0.95 : 0
+  const maxValue = allValues.length > 0 ? Math.max(...allValues) * 1.05 : 100
 
-    // Draw chart background
-    ctx.fillStyle = "rgba(255, 255, 255, 0.5)"
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
+  function filterByRange(data: PriceData[], range: string): PriceData[] {
+    if (!data.length || range === "all") return data
 
-    // Draw grid lines
-    ctx.strokeStyle = "rgba(30, 58, 138, 0.1)"
-    ctx.lineWidth = 1
+    const endDate = new Date(data[data.length - 1].Date)
+    const startDate = new Date(endDate)
 
-    // Horizontal grid lines
-    const gridLines = 5
-    for (let i = 0; i <= gridLines; i++) {
-      const y = padding + (chartHeight / gridLines) * i
-      ctx.beginPath()
-      ctx.moveTo(padding, y)
-      ctx.lineTo(padding + chartWidth, y)
-      ctx.stroke()
-
-      // Add price labels
-      const value = maxValue - (valueRange / gridLines) * i
-      ctx.fillStyle = "#64748b"
-      ctx.font = "10px sans-serif"
-      ctx.textAlign = "right"
-      ctx.fillText(`Rp${value.toLocaleString("id-ID")}`, padding - 5, y + 3)
+    switch (range) {
+      case "5d":
+        startDate.setDate(endDate.getDate() - 5)
+        break
+      case "1mo":
+        startDate.setMonth(endDate.getMonth() - 1)
+        break
+      case "6mo":
+        startDate.setMonth(endDate.getMonth() - 6)
+        break
+      case "1y":
+        startDate.setFullYear(endDate.getFullYear() - 1)
+        break
+      case "3y":
+        startDate.setFullYear(endDate.getFullYear() - 3)
+        break
     }
 
-    // Draw line chart
-    ctx.strokeStyle = "#10B981"
-    ctx.lineWidth = 2
-    ctx.beginPath()
+    return data.filter((item) => new Date(item.Date) >= startDate)
+  }
 
-    // Plot data points
-    data.forEach((value, index) => {
-      const x = padding + (chartWidth / (data.length - 1)) * index
-      const y = padding + chartHeight - ((value - minValue) / valueRange) * chartHeight
+  function rangeBtnClass(active: boolean) {
+    return `px-2 py-1 rounded-full text-sm ${
+      active ? "bg-primary/10 text-primary font-semibold" : "bg-secondary/30 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+    }`
+  }
 
-      if (index === 0) {
-        ctx.moveTo(x, y)
-      } else {
-        ctx.lineTo(x, y)
-      }
-    })
-    ctx.stroke()
+  // Fungsi untuk mendapatkan ticks yang akan ditampilkan berdasarkan range
+  function getCustomTicks() {
+    if (!formattedData.length) return []
 
-    // Add gradient fill under the line
-    const gradient = ctx.createLinearGradient(0, padding, 0, padding + chartHeight)
-    gradient.addColorStop(0, "rgba(16, 185, 129, 0.2)")
-    gradient.addColorStop(1, "rgba(16, 185, 129, 0)")
+    // Untuk opsi "Semua", hanya tampilkan tahun
+    if (selectedRange === "all") {
+      const years = new Set<number>()
+      const yearTicks: string[] = []
 
-    ctx.fillStyle = gradient
-    ctx.beginPath()
+      formattedData.forEach((item) => {
+        const year = new Date(item.Date).getFullYear()
+        years.add(year)
+      })
 
-    // Start from bottom left
-    ctx.moveTo(padding, padding + chartHeight)
+      Array.from(years)
+        .sort()
+        .forEach((year) => {
+          const firstDateInYear = formattedData.find((item) => new Date(item.Date).getFullYear() === year)
+          if (firstDateInYear) {
+            yearTicks.push(firstDateInYear.Date)
+          }
+        })
 
-    // Plot data points again
-    data.forEach((value, index) => {
-      const x = padding + (chartWidth / (data.length - 1)) * index
-      const y = padding + chartHeight - ((value - minValue) / valueRange) * chartHeight
-      ctx.lineTo(x, y)
-    })
+      return yearTicks
+    }
 
-    // Complete the path to bottom right
-    ctx.lineTo(padding + chartWidth, padding + chartHeight)
-    ctx.closePath()
-    ctx.fill()
+    // Untuk opsi "3 Tahun", tampilkan 4 bulan per tahun (Jan, Apr, Jul, Oct)
+    if (selectedRange === "3y") {
+      const quarterTicks: string[] = []
+      const targetMonths = [0, 3, 6, 9] // Jan, Apr, Jul, Oct (0-based)
+      const years = new Set<number>()
 
-    // Add data points
-    ctx.fillStyle = "#ffffff"
-    ctx.strokeStyle = "#10B981"
-    ctx.lineWidth = 2
+      formattedData.forEach((item) => {
+        const year = new Date(item.Date).getFullYear()
+        years.add(year)
+      })
 
-    data.forEach((value, index) => {
-      const x = padding + (chartWidth / (data.length - 1)) * index
-      const y = padding + chartHeight - ((value - minValue) / valueRange) * chartHeight
+      Array.from(years)
+        .sort()
+        .forEach((year) => {
+          targetMonths.forEach((month) => {
+            const targetDate = new Date(year, month, 1)
 
-      // Only draw points for every 4th data point to avoid clutter
-      if (index % 4 === 0 || index === data.length - 1) {
-        ctx.beginPath()
-        ctx.arc(x, y, 4, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.stroke()
-      }
-    })
+            let closestItem = formattedData[0]
+            let closestDiff = Number.POSITIVE_INFINITY
 
-    // Add time labels
-    const times = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"]
-    const timeStep = Math.floor(data.length / (times.length - 1))
+            formattedData.forEach((item) => {
+              const itemDate = new Date(item.Date)
+              if (itemDate.getFullYear() === year) {
+                const diff = Math.abs(itemDate.getTime() - targetDate.getTime())
+                if (diff < closestDiff) {
+                  closestDiff = diff
+                  closestItem = item
+                }
+              }
+            })
 
-    times.forEach((time, i) => {
-      const index = i * timeStep
-      if (index < data.length) {
-        const x = padding + (chartWidth / (data.length - 1)) * index
-        ctx.fillStyle = "#64748b"
-        ctx.font = "10px sans-serif"
-        ctx.textAlign = "center"
-        ctx.fillText(time, x, padding + chartHeight + 15)
-      }
-    })
-  }, [])
+            const itemDate = new Date(closestItem.Date)
+            const diff = Math.abs(itemDate.getTime() - targetDate.getTime())
+            if (diff < 45 * 24 * 60 * 60 * 1000) {
+              quarterTicks.push(closestItem.Date)
+            }
+          })
+        })
+
+      return quarterTicks
+    }
+
+    // Untuk opsi "6 Bulan" dan "1 Tahun", tampilkan semua bulan
+    if (selectedRange === "6mo" || selectedRange === "1y") {
+      const monthTicks: string[] = []
+      let currentMonth = -1
+      let currentYear = -1
+
+      formattedData.forEach((item) => {
+        const date = new Date(item.Date)
+        const month = date.getMonth()
+        const year = date.getFullYear()
+
+        if (month !== currentMonth || year !== currentYear) {
+          monthTicks.push(item.Date)
+          currentMonth = month
+          currentYear = year
+        }
+      })
+
+      return monthTicks
+    }
+
+    // Untuk opsi "5 Hari" dan "1 Bulan", tampilkan semua hari
+    return formattedData.map((item) => item.Date)
+  }
+
+  const customTicks = getCustomTicks()
 
   return (
-    <div className="w-full h-[300px] relative">
-      <div className="absolute top-2 right-2 flex gap-2">
-        <div className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">1D</div>
-        <div className="text-xs px-2 py-1 rounded-full bg-secondary/30 text-muted-foreground hover:bg-primary/10 hover:text-primary cursor-pointer">
-          1W
-        </div>
-        <div className="text-xs px-2 py-1 rounded-full bg-secondary/30 text-muted-foreground hover:bg-primary/10 hover:text-primary cursor-pointer">
-          1M
-        </div>
-        <div className="text-xs px-2 py-1 rounded-full bg-secondary/30 text-muted-foreground hover:bg-primary/10 hover:text-primary cursor-pointer">
-          1Y
+    <div className="h-full w-full">
+      <div className="flex flex-col gap-3 mb-4 ml-4">
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={() => setSelectedRange("5d")} className={rangeBtnClass(selectedRange === "5d")}>
+            5 Hari
+          </button>
+          <button onClick={() => setSelectedRange("1mo")} className={rangeBtnClass(selectedRange === "1mo")}>
+            1 Bulan
+          </button>
+          <button onClick={() => setSelectedRange("6mo")} className={rangeBtnClass(selectedRange === "6mo")}>
+            6 Bulan
+          </button>
+          <button onClick={() => setSelectedRange("1y")} className={rangeBtnClass(selectedRange === "1y")}>
+            1 Tahun
+          </button>
+          <button onClick={() => setSelectedRange("3y")} className={rangeBtnClass(selectedRange === "3y")}>
+            3 Tahun
+          </button>
+          <button onClick={() => setSelectedRange("all")} className={rangeBtnClass(selectedRange === "all")}>
+            Semua
+          </button>
         </div>
       </div>
-      <canvas ref={canvasRef} className="w-full h-full" />
+      <div className="flex gap-4 flex-wrap mb-4 ml-4">
+        <button
+          onClick={() => handleLegendClick("Open")}
+          className={`px-3 py-1 rounded-full text-sm ${activeDataKey === "Open" ? "bg-blue-200 text-blue-700 font-medium" : "bg-secondary/30 text-muted-foreground hover:bg-blue-200 hover:text-blue-700"}`}
+        >
+          Open
+        </button>
+        <button
+          onClick={() => handleLegendClick("Close")}
+          className={`px-3 py-1 rounded-full text-sm ${activeDataKey === "Close" ? "bg-purple-200 text-purple-700 font-medium" : "bg-secondary/30 text-muted-foreground hover:bg-purple-200 hover:text-purple-700"}`}
+        >
+          Close
+        </button>
+        <button
+          onClick={() => handleLegendClick("High")}
+          className={`px-3 py-1 rounded-full text-sm ${activeDataKey === "High" ? "bg-green-200 text-green-700 font-medium" : "bg-secondary/30 text-muted-foreground hover:bg-green-200 hover:text-green-700"}`}
+        >
+          High
+        </button>
+        <button
+          onClick={() => handleLegendClick("Low")}
+          className={`px-3 py-1 rounded-full text-sm ${activeDataKey === "Low" ? "bg-red-200 text-red-700 font-medium" : "bg-secondary/30 text-muted-foreground hover:bg-red-200 hover:text-red-700"}`}
+        >
+          Low
+        </button>
+      </div>
+
+      <div className="h-[400px]">
+        {formattedData.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={formattedData}
+              margin={{
+                top: 5,
+                right: 5,
+                left: 0, // Reduced from 20 to 10 to minimize left margin
+                bottom: 5,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis
+                dataKey="Date"
+                tick={{ fontSize: 12 }}
+                tickFormatter={(value: string) => {
+                  const date = new Date(value)
+                  const year = date.getFullYear()
+                  const month = date.getMonth()
+                  const day = date.getDate()
+                  const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]
+
+                  if (selectedRange === "all") {
+                    return `${year}`
+                  }
+                  if (selectedRange === "3y") {
+                    return `${monthNames[month]}/${year}`
+                  }
+                  if (selectedRange === "1y" || selectedRange === "6mo") {
+                    return `${monthNames[month]}/${year}`
+                  }
+                  return `${day}/${monthNames[month]}/${year.toString().slice(-2)}`
+                }}
+                ticks={customTicks}
+                axisLine={{ stroke: "#e0e0e0" }}
+                padding={{ left: 10, right: 10 }}
+                height={50}
+                angle={selectedRange === "5d" || selectedRange === "1mo" ? -45 : 0}
+                textAnchor={selectedRange === "5d" || selectedRange === "1mo" ? "end" : "middle"}
+              />
+              <YAxis
+                domain={[minValue, maxValue]}
+                tick={{ fontSize: 12 }}
+                tickFormatter={(value) => `${Math.round(value).toLocaleString("id-ID")}`}
+                width={60} // Reduced from 80 to 60 to minimize left space
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend
+                verticalAlign="bottom"
+                height={36}
+                iconSize={20}
+                wrapperStyle={{
+                  paddingTop: 5,
+                  paddingBottom: 5,
+                  lineHeight: "24px",
+                  fontSize: "14px",
+                }}
+              />
+              {activeDataKey === "Open" && (
+                <Line
+                  type="monotone"
+                  dataKey="Open"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 6 }}
+                  name="Open"
+                />
+              )}
+              {activeDataKey === "Close" && (
+                <Line
+                  type="monotone"
+                  dataKey="Close"
+                  stroke="#6366f1"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 6 }}
+                  name="Close"
+                />
+              )}
+              {activeDataKey === "High" && (
+                <Line
+                  type="monotone"
+                  dataKey="High"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 6 }}
+                  name="High"
+                />
+              )}
+              {activeDataKey === "Low" && (
+                <Line
+                  type="monotone"
+                  dataKey="Low"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 6 }}
+                  name="Low"
+                />
+              )}
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-full flex items-center justify-center text-muted-foreground">
+            Tidak ada data untuk ditampilkan
+          </div>
+        )}
+      </div>
     </div>
   )
 }
