@@ -99,7 +99,22 @@ services:
       - "5000:5000"
     networks:
       - saham_net
-      
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    image: next-dashboard:latest
+    container_name: dashboard
+    ports:
+      - "3000:3000"
+    networks:
+      - saham_net
+    volumes:
+      - ./dashboard:/app
+    environment:
+      - NODE_ENV=production
+
   extract_yfinance: #ini udh aman
     profiles: ["build"]
     build:
