@@ -171,8 +171,8 @@ def download_idx_reports():
 
                     # Pagination handling
                     try:
-                        element = wait.until(EC.presence_of_element_located((By.XPATH, "//button[contains(@class, 'last') and not(@disabled)]")))
-                        element = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'last') and not(@disabled)]")))
+                        element = wait.until(EC.presence_of_element_located((By.XPATH, "//button[contains(@class, 'next') and not(@disabled)]")))
+                        element = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'next') and not(@disabled)]")))
                         if not element.is_displayed() or not element.is_enabled():
                             raise Exception("Element is not interactable")
                         
