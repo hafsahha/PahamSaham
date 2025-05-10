@@ -29,9 +29,9 @@ services:
     container_name: extract_idx
     volumes:
       - ./output:/app/output
-      - ./extract/idx_zip:/app/extract/idx_zip
-      - ./extract/idx_extracted:/app/extract/idx_extracted
-      - ./output/screenshot:/screenshot
+      - ./output/idx_zip:/output/idx_zip
+      - ./output/idx_extracted:/output/idx_extracted
+      - ./output/debug(ss):/screenshot
       
     environment:
       - PYTHONUNBUFFERED=1

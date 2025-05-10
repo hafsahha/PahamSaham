@@ -49,8 +49,8 @@ ENV YFINANCE_OUTPUT_PATH=/app/output/yfinance_output.json
 ENV IDX_OUTPUT_PATH=/app/output/idx_extract.json
 ENV IQPLUS_OUTPUT_PATH=/app/output/iqplus_output.json
 
-ENV zip_downloaded_path=/app/extract/idx_zip
-ENV zip_extracted_path=/app/extract/idx_extracted
+ENV zip_downloaded_path=/output/idx_zip
+ENV zip_extracted_path=/output/idx_extracted
 
 # Default command
 CMD ["python", "idx_extract.py"]
