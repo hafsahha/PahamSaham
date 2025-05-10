@@ -1,0 +1,4 @@
+/airflow/logs
+/airflow/__pycache__
+
+/output
