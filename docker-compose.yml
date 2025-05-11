@@ -184,10 +184,10 @@ services:
     container_name: transform_service
     volumes:
       - ./output:/app/output  # Mount the output directory for saving results
-      - ./output/iqplus_extracted:/app/output/iqplus_extracted  # Mount the extracted data folder from output
+      - ./output:/app/output  # Mount the extracted data folder from output
     environment:
-      OUTPUT_PATH: /app/output/iqplus_extracted
-      INPUT_PATH: /app/output/iqplus_extracted
+      OUTPUT_PATH: /app/output
+      INPUT_PATH: /app/output
     command: >
       sh -c "python iqplus_transform.py --category stock"
 

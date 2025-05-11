@@ -216,8 +216,8 @@ def main(category, date=None):
     # output_path = os.path.join("/app/output/iqplus_extracted", output_file)
 
     # Pakai environment variable, fallback ke default path jika tidak tersedia
-    input_dir = os.getenv("INPUT_PATH", "../output/iqplus_extracted")
-    output_dir = os.getenv("OUTPUT_PATH", "../output/iqplus_extracted")
+    input_dir = os.getenv("INPUT_PATH", "../output")
+    output_dir = os.getenv("OUTPUT_PATH", "../output")
 
     
     # input_dir = os.environ.get('INPUT_PATH')
