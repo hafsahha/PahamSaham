@@ -114,7 +114,7 @@ services:
       - NODE_ENV=production
 
   extract_yfinance: #ini udh aman
-    profiles: ["build"]
+    profiles: ["dev"]
     build:
       context: . 
       dockerfile: extract/Dockerfile
@@ -127,7 +127,7 @@ services:
     command: ["python", "yfinance_extract.py"]  # Menjalankan yfinance_extract.py
 
   extract_idx: #ini udh aman
-    profiles: ["build"]
+    profiles: ["dev"]
     build:
       context: .  # Path to the root directory, not just extract
       dockerfile: extract/Dockerfile
@@ -150,7 +150,7 @@ services:
     command: ["python", "idx_extract.py"]
 
   extract_iqplus:
-    profiles: ["build"]
+    profiles: ["dev"]
     build:
       context: .
       dockerfile: extract/Dockerfile
@@ -164,7 +164,7 @@ services:
       sh -c "python iqplus_extract.py --category market --output /app/output/ --pages 5"
 
   transform_idx:
-    profiles: ["build"]
+    profiles: ["dev"]
     build:
       context: ./transform  # The directory containing your transform code
     image: transformer
@@ -178,7 +178,7 @@ services:
     command: ["python", "idx_transform.py"]  # Command to run your transform script
 
   transform_iqplus:
-    profiles: ["build"]
+    profiles: ["dev"]
     build:
       context: ./transform  # The directory containing your transform code
     image: transformer
@@ -214,7 +214,7 @@ services:
           memory: 10G
 
   load_yfinance:
-    profiles: ["build"]
+    profiles: ["dev"]
     build:
       context: ./load
       dockerfile: Dockerfile
@@ -227,7 +227,7 @@ services:
       INPUT_PATH: /app/output/yfinance_output.json
 
   load_idx:
-    profiles: ["build"]
+    profiles: ["dev"]
     build:
       context: ./load
       dockerfile: Dockerfile
@@ -240,7 +240,7 @@ services:
       INPUT_PATH: /app/output/idx_output.json
       
   load_iqplus:
-    profiles: ["build"]
+    profiles: ["dev"]
     build:
       context: ./load
       dockerfile: Dockerfile
