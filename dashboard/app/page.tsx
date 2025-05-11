@@ -72,24 +72,24 @@ interface StockData {
 // Fungsi untuk fetch data emiten
 async function fetchEmiten(): Promise<Emiten[]> {
   try {
-    const apiUrl = "http://localhost:5000/api/emiten"; // Jalankan lokal
+    const apiUrl = "http://localhost:5000/api/emiten";
     const res = await fetch(apiUrl, { cache: "no-store" });
     if (!res.ok) {
       throw new Error(`Failed to fetch emiten: ${res.status} ${res.statusText}`);
     }
     const tickers: string[] = await res.json();
-    console.log("Fetched emitens:", tickers); // Debugging
+    console.log("Fetched emitens:", tickers);
     return tickers.map(ticker => ({ ticker, name: ticker.split('.')[0] }));
   } catch (error) {
     console.error("Error fetching emitens:", error);
-    return [{ ticker: "BBRI.JK", name: "BBRI" }]; // Fallback jika API gagal
+    return [{ ticker: "BBRI.JK", name: "BBRI" }];
   }
 }
 
 // Fungsi untuk fetch data harga
 async function fetchPriceData(emiten: string, period: string): Promise<PriceData[]> {
   try {
-    const apiUrl = `http://localhost:5000/api/harga?emiten=${emiten}&period=${period}`; // Jalankan lokal
+    const apiUrl = `http://localhost:5000/api/harga?emiten=${emiten}&period=${period}`;
     const res = await fetch(apiUrl, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to fetch price data");
     return await res.json();
@@ -172,7 +172,7 @@ export default function Dashboard() {
   const [priceData, setPriceData] = useState<PriceData[]>([]);
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState(""); // State untuk pencarian
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch daftar emiten saat komponen dimuat
   useEffect(() => {
@@ -201,7 +201,7 @@ export default function Dashboard() {
   const filteredEmiten = initialEmiten.filter(emiten =>
     emiten.ticker.toLowerCase().includes(searchQuery.toLowerCase()) ||
     emiten.name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  );
 
   const formatCurrency = (value: number) => `Rp${value.toLocaleString("id-ID")}`;
   const formatPercentage = (value: number) => `${value.toFixed(1)}%`;
@@ -235,7 +235,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-secondary/50 to-secondary">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-secondary/50 to-secondary">
       <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-white/80 backdrop-blur-md px-6 shadow-sm">
         <Button variant="ghost" size="icon" className="md:hidden">
           <Menu className="h-5 w-5" />
@@ -305,34 +305,28 @@ export default function Dashboard() {
           </DropdownMenu>
         </div>
       </header>
-      <div className="grid flex-1 md:grid-cols-[240px_1fr]">
-        <aside className="hidden md:block border-r bg-white/80 backdrop-blur-sm sticky top-0 h-screen"> {/* Sticky sidebar */}
-          <div className="flex h-full flex-col gap-2 p-4">
-            <div className="flex items-center gap-">
+
+      <div className="flex flex-1">
+        <aside className="hidden md:block border-r bg-white/80 backdrop-blur-sm fixed top-16 left-0 w-[240px] h-[calc(100vh-64px)] z-40">
+          <div className="flex flex-col h-full gap-2 p-4">
+            <div className="flex items-center gap-2 mb-2">
               <Input
+                type="search"
                 placeholder="Cari saham..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-9 border-secondary/30 bg-white/80 focus:border-accent"
+                className="h-9 border-secondary/30 bg-white/80 focus:border-accent text-sm"
               />
-              {/* <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9 shrink-0 border-secondary/30 bg-white/80 hover:bg-accent/10 hover:text-accent"
-              >
-                <Search className="h-4 w-4" />
-                <span className="sr-only">Cari</span>
-              </Button> */}
             </div>
 
-            <div className="py-2">
-              <h3 className="mb-2 text-sm font-medium text-primary">Watchlist</h3>
-              <div className="grid gap-1 max-h-40 overflow-y-auto">
+            <h3 className="mb-2 text-sm font-medium text-primary">Watchlist</h3>
+            <div className="grid gap-1 flex-1 overflow-y-auto max-h-30">
+              <div className="grid gap-1">
                 {filteredEmiten.map((emiten) => (
                   <Button
                     key={emiten.ticker}
                     variant={activeStock === emiten.ticker ? "secondary" : "ghost"}
-                    className={`justify-between h-auto py-2 ${activeStock === emiten.ticker ? "bg-primary/10 hover:bg-primary/20 text-primary border-none" : "hover:bg-primary/10"}`}
+                    className={`justify-between h-auto py-2 text-sm ${activeStock === emiten.ticker ? "bg-primary/10 hover:bg-primary/20 text-primary border-none" : "hover:bg-primary/10"}`}
                     onClick={() => setActiveStock(emiten.ticker)}
                   >
                     <div className="flex items-center gap-2">
@@ -354,10 +348,10 @@ export default function Dashboard() {
               </div>
             </div>
             <Separator className="bg-secondary/30" />
-            <nav className="grid gap-1 py-">
+            <nav className="grid gap-1 py-2">
               <Button
                 variant="ghost"
-                className="justify-start gap-2 font-normal hover:bg-accent/10 hover:text-accent"
+                className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
                 asChild
               >
                 <Link href="#">
@@ -367,7 +361,7 @@ export default function Dashboard() {
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start gap-2 font-normal hover:bg-accent/10 hover:text-accent"
+                className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
                 asChild
               >
                 <Link href="#">
@@ -377,7 +371,7 @@ export default function Dashboard() {
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start gap-2 font-normal hover:bg-accent/10 hover:text-accent"
+                className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
                 asChild
               >
                 <Link href="#">
@@ -387,7 +381,7 @@ export default function Dashboard() {
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start gap-2 font-normal hover:bg-accent/10 hover:text-accent"
+                className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
                 asChild
               >
                 <Link href="#">
@@ -397,7 +391,7 @@ export default function Dashboard() {
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start gap-2 font-normal hover:bg-accent/10 hover:text-accent"
+                className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
                 asChild
               >
                 <Link href="#">
@@ -407,7 +401,7 @@ export default function Dashboard() {
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start gap-2 font-normal hover:bg-accent/10 hover:text-accent"
+                className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
                 asChild
               >
                 <Link href="#">
@@ -417,7 +411,7 @@ export default function Dashboard() {
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start gap-2 font-normal hover:bg-accent/10 hover:text-accent"
+                className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
                 asChild
               >
                 <Link href="#">
@@ -426,183 +420,188 @@ export default function Dashboard() {
                 </Link>
               </Button>
             </nav>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-sm text-muted-foreground">Big Data</p>
+            </div>
           </div>
         </aside>
 
-        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
-          <div className="flex items-center">
-            <div>
-              <h1 className="text-lg font-semibold md:text-2xl text-primary">Dashboard</h1>
-              <p className="text-sm text-muted-foreground">Pantau pergerakan saham Indonesia secara real-time</p>
+        <main className="flex-1 md:ml-[240px] overflow-y-auto h-[calc(100vh-64px)]">
+          <div className="p-4 md:p-6 space-y-4">
+            <div className="flex items-center">
+              <div>
+                <h1 className="text-lg font-semibold md:text-2xl text-primary">Dashboard</h1>
+                <p className="text-sm text-muted-foreground">Pantau pergerakan saham Indonesia secara real-time</p>
+              </div>
+              <div className="ml-auto flex items-center gap-2">
+                <Button className="bg-accent hover:bg-accent/90 text-white">Refresh</Button>
+              </div>
             </div>
-            <div className="ml-auto flex items-center gap-2">
-              <Button className="bg-accent hover:bg-accent/90 text-white">Refresh</Button>
-            </div>
-          </div>
-          <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList className="bg-white/80 p-1">
-              <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                Ringkasan
-              </TabsTrigger>
-              <TabsTrigger value="stocks" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                Saham
-              </TabsTrigger>
-              <TabsTrigger value="portfolio" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                Portofolio
-              </TabsTrigger>
-              <TabsTrigger value="comparison" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                Perbandingan
-              </TabsTrigger>
-              <TabsTrigger value="news" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                Berita
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="overview" className="space-y-4 slide-up">
-              <MarketOverview />
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="lg:col-span-5 bg-white/80 backdrop-blur-sm border-secondary/20 card-hover">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <span className="bg-primary text-white text-xs px-2 py-1 rounded">{activeStock}</span>
-                      {initialEmiten.find((e) => e.ticker === activeStock)?.name || "Unknown"}
-                    </CardTitle>
-                    <CardDescription>
+            <Tabs defaultValue="overview" className="space-y-4">
+              <TabsList className="bg-white/80 p-1">
+                <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  Ringkasan
+                </TabsTrigger>
+                <TabsTrigger value="stocks" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  Saham
+                </TabsTrigger>
+                <TabsTrigger value="portfolio" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  Portofolio
+                </TabsTrigger>
+                <TabsTrigger value="comparison" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  Perbandingan
+                </TabsTrigger>
+                <TabsTrigger value="news" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  Berita
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="overview" className="space-y-4 slide-up">
+                <MarketOverview />
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                  <Card className="lg:col-span-5 bg-white/80 backdrop-blur-sm border-secondary/20 card-hover">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <span className="bg-primary text-white text-xs px-2 py-1 rounded">{activeStock}</span>
+                        {initialEmiten.find((e) => e.ticker === activeStock)?.name || "Unknown"}
+                      </CardTitle>
+                      <CardDescription>
+                        {stockData ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl font-bold">{formatCurrency(stockData.price)}</span>
+                            <div className={`flex items-center gap-1 ${stockData.change >= 0 ? "text-accent" : "text-red-500"}`}>
+                              {stockData.change >= 0 ? (
+                                <ArrowUp className="h-4 w-4" />
+                              ) : (
+                                <ArrowDown className="h-4 w-4" />
+                              )}
+                              <span>{formatCurrency(Math.abs(stockData.change))} ({formatPercentage(Math.abs(stockData.changePercent))})</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>Loading...</div>
+                        )}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pl-2">
+                      <StockChart data={priceData} />
+                    </CardContent>
+                  </Card>
+                  <Card className="lg:col-span-2 bg-white/80 backdrop-blur-sm border-secondary/20 card-hover">
+                    <CardHeader>
+                      <CardTitle>Detail Saham</CardTitle>
+                    </CardHeader>
+                    <CardContent>
                       {stockData ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-2xl font-bold">{formatCurrency(stockData.price)}</span>
-                          <div className={`flex items-center gap-1 ${stockData.change >= 0 ? "text-accent" : "text-red-500"}`}>
-                            {stockData.change >= 0 ? (
-                              <ArrowUp className="h-4 w-4" />
-                            ) : (
-                              <ArrowDown className="h-4 w-4" />
-                            )}
-                            <span>{formatCurrency(Math.abs(stockData.change))} ({formatPercentage(Math.abs(stockData.changePercent))})</span>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div className="text-muted-foreground">Open</div>
+                            <div className="text-right font-medium">{formatCurrency(stockData.open)}</div>
+                            <div className="text-muted-foreground">High</div>
+                            <div className="text-right font-medium">{formatCurrency(stockData.high)}</div>
+                            <div className="text-muted-foreground">Low</div>
+                            <div className="text-right font-medium">{formatCurrency(stockData.low)}</div>
+                            <div className="text-muted-foreground">Close</div>
+                            <div className="text-right font-medium">{formatCurrency(stockData.price)}</div>
+                            <div className="text-muted-foreground">Volume</div>
+                            <div className="text-right font-medium">{formatVolume(stockData.volume)}</div>
+                          </div>
+                          <Separator className="bg-secondary/30" />
+                          <div className="flex justify-between">
+                            <Button
+                              variant="outline"
+                              className="border-secondary/30 bg-white hover:bg-primary/10 hover:text-primary hover:border-primary/50"
+                            >
+                              Beli
+                            </Button>
+                            <Button className="bg-accent hover:bg-accent/90 text-white">Tambah ke Watchlist</Button>
                           </div>
                         </div>
                       ) : (
                         <div>Loading...</div>
                       )}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pl-2">
-                    <StockChart data={priceData} />
-                  </CardContent>
-                </Card>
-                <Card className="lg:col-span-2 bg-white/80 backdrop-blur-sm border-secondary/20 card-hover">
+                    </CardContent>
+                  </Card>
+                </div>
+                <StockNews />
+              </TabsContent>
+              <TabsContent value="stocks" className="space-y-4 slide-up">
+                <Card className="bg-white/80 backdrop-blur-sm border-secondary/20 card-hover">
                   <CardHeader>
-                    <CardTitle>Detail Saham</CardTitle>
+                    <CardTitle>Daftar Saham</CardTitle>
+                    <CardDescription>Daftar saham yang paling aktif diperdagangkan hari ini</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {stockData ? (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div className="text-muted-foreground">Open</div>
-                          <div className="text-right font-medium">{formatCurrency(stockData.open)}</div>
-                          <div className="text-muted-foreground">High</div>
-                          <div className="text-right font-medium">{formatCurrency(stockData.high)}</div>
-                          <div className="text-muted-foreground">Low</div>
-                          <div className="text-right font-medium">{formatCurrency(stockData.low)}</div>
-                          <div className="text-muted-foreground">Close</div>
-                          <div className="text-right font-medium">{formatCurrency(stockData.price)}</div>
-                          <div className="text-muted-foreground">Volume</div>
-                          <div className="text-right font-medium">{formatVolume(stockData.volume)}</div>
-                        </div>
-                        <Separator className="bg-secondary/30" />
-                        <div className="flex justify-between">
-                          <Button
-                            variant="outline"
-                            className="border-secondary/30 bg-white hover:bg-primary/10 hover:text-primary hover:border-primary/50"
-                          >
-                            Beli
-                          </Button>
-                          <Button className="bg-accent hover:bg-accent/90 text-white">Tambah ke Watchlist</Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>Loading...</div>
-                    )}
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="hover:bg-secondary/5">
+                          <TableHead>Kode</TableHead>
+                          <TableHead>Nama</TableHead>
+                          <TableHead className="text-right">Harga</TableHead>
+                          <TableHead className="text-right">Perubahan</TableHead>
+                          <TableHead className="text-right">% Perubahan</TableHead>
+                          <TableHead className="text-right">Volume</TableHead>
+                          <TableHead></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {initialEmiten.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center">Loading saham...</TableCell>
+                          </TableRow>
+                        ) : (
+                          initialEmiten.map((emiten) => (
+                            <StockRow key={emiten.ticker} emiten={emiten} />
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                  <CardFooter>
+                    <Button
+                      variant="outline"
+                      className="w-full border-secondary/30 hover:bg-primary/10 hover:text-primary hover:border-primary/50"
+                    >
+                      Lihat Semua Saham
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </TabsContent>
+              <TabsContent value="portfolio" className="space-y-4 slide-up">
+                <PortfolioAnalytics />
+                <Card className="bg-white/80 backdrop-blur-sm border-secondary/20 card-hover">
+                  <CardHeader>
+                    <CardTitle>Saham yang Dimiliki</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="hover:bg-secondary/5">
+                          <TableHead>Kode</TableHead>
+                          <TableHead>Nama</TableHead>
+                          <TableHead className="text-right">Jumlah</TableHead>
+                          <TableHead className="text-right">Harga Beli</TableHead>
+                          <TableHead className="text-right">Harga Saat Ini</TableHead>
+                          <TableHead className="text-right">Nilai</TableHead>
+                          <TableHead className="text-right">P/L</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <TableRow className="hover:bg-secondary/5">
+                          <TableCell colSpan={7}>Data portofolio belum tersedia</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
-              </div>
-              <StockNews />
-            </TabsContent>
-            <TabsContent value="stocks" className="space-y-4 slide-up">
-              <Card className="bg-white/80 backdrop-blur-sm border-secondary/20 card-hover">
-                <CardHeader>
-                  <CardTitle>Daftar Saham</CardTitle>
-                  <CardDescription>Daftar saham yang paling aktif diperdagangkan hari ini</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="hover:bg-secondary/5">
-                        <TableHead>Kode</TableHead>
-                        <TableHead>Nama</TableHead>
-                        <TableHead className="text-right">Harga</TableHead>
-                        <TableHead className="text-right">Perubahan</TableHead>
-                        <TableHead className="text-right">% Perubahan</TableHead>
-                        <TableHead className="text-right">Volume</TableHead>
-                        <TableHead></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {initialEmiten.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={7} className="text-center">Loading saham...</TableCell>
-                        </TableRow>
-                      ) : (
-                        initialEmiten.map((emiten) => (
-                          <StockRow key={emiten.ticker} emiten={emiten} />
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    variant="outline"
-                    className="w-full border-secondary/30 hover:bg-primary/10 hover:text-primary hover:border-primary/50"
-                  >
-                    Lihat Semua Saham
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-            <TabsContent value="portfolio" className="space-y-4 slide-up">
-              <PortfolioAnalytics />
-              <Card className="bg-white/80 backdrop-blur-sm border-secondary/20 card-hover">
-                <CardHeader>
-                  <CardTitle>Saham yang Dimiliki</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="hover:bg-secondary/5">
-                        <TableHead>Kode</TableHead>
-                        <TableHead>Nama</TableHead>
-                        <TableHead className="text-right">Jumlah</TableHead>
-                        <TableHead className="text-right">Harga Beli</TableHead>
-                        <TableHead className="text-right">Harga Saat Ini</TableHead>
-                        <TableHead className="text-right">Nilai</TableHead>
-                        <TableHead className="text-right">P/L</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow className="hover:bg-secondary/5">
-                        <TableCell colSpan={7}>Data portofolio belum tersedia</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="comparison" className="space-y-4 slide-up">
-              <StockComparison />
-            </TabsContent>
-            <TabsContent value="news" className="space-y-4 slide-up">
-              <StockNews fullPage={true} />
-            </TabsContent>
-          </Tabs>
+              </TabsContent>
+              <TabsContent value="comparison" className="space-y-4 slide-up">
+                <StockComparison />
+              </TabsContent>
+              <TabsContent value="news" className="space-y-4 slide-up">
+                <StockNews fullPage={true} />
+              </TabsContent>
+            </Tabs>
+          </div>
         </main>
       </div>
     </div>

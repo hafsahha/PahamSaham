@@ -251,7 +251,7 @@ export default function StockChart({ data }: PriceChartProps) {
         </button>
       </div>
 
-      <div className="h-[400px]">
+      <div className="h-[350px]">
         {formattedData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart

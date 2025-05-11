@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -10,207 +11,133 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
-const stocks = [
-  { value: "BBCA", label: "Bank Central Asia Tbk", sector: "Perbankan" },
-  { value: "BBRI", label: "Bank Rakyat Indonesia Tbk", sector: "Perbankan" },
-  { value: "BMRI", label: "Bank Mandiri Tbk", sector: "Perbankan" },
-  { value: "TLKM", label: "Telkom Indonesia Tbk", sector: "Telekomunikasi" },
-  { value: "ASII", label: "Astra International Tbk", sector: "Otomotif" },
-  { value: "UNVR", label: "Unilever Indonesia Tbk", sector: "Konsumer" },
-  { value: "ICBP", label: "Indofood CBP Sukses Makmur Tbk", sector: "Konsumer" },
-  { value: "INDF", label: "Indofood Sukses Makmur Tbk", sector: "Konsumer" },
-  { value: "ANTM", label: "Aneka Tambang Tbk", sector: "Pertambangan" },
-  { value: "PTBA", label: "Bukit Asam Tbk", sector: "Pertambangan" },
-]
+// Interface untuk tipe data dari API
+interface Emiten {
+  ticker: string;
+  name: string;
+}
+
+interface PriceData {
+  Close: number;
+  Date: string;
+  High: number;
+  Low: number;
+  Open: number;
+  Symbol: string;
+  Volume: number;
+}
+
+// Fungsi untuk fetch data emiten
+async function fetchEmiten(): Promise<Emiten[]> {
+  try {
+    const apiUrl = "http://localhost:5000/api/emiten";
+    const res = await fetch(apiUrl, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Failed to fetch emiten: ${res.status} ${res.statusText}`);
+    const tickers: string[] = await res.json();
+    return tickers.map(ticker => ({ ticker, name: ticker.split('.')[0] }));
+  } catch (error) {
+    console.error("Error fetching emitens:", error);
+    return [{ ticker: "BBRI.JK", name: "BBRI" }];
+  }
+}
+
+// Fungsi untuk fetch data harga
+async function fetchPriceData(emiten: string, period: string): Promise<PriceData[]> {
+  try {
+    const apiUrl = `http://localhost:5000/api/harga?emiten=${emiten}&period=${period}`;
+    const res = await fetch(apiUrl, { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch price data");
+    return await res.json();
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
+
+const CustomTooltip = ({ active, payload, label, selectedStocks }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-2 border border-gray-200 rounded shadow-lg">
+        <p className="text-xs text-gray-600">Tanggal: {label}</p>
+        {payload.map((entry: any, index: number) => (
+          <div key={index}>
+            <p className="font-bold text-xs">{entry.name}</p>
+            <p className="text-xs">
+              Harga: <span className="font-medium">Rp {entry.value.toLocaleString("id-ID")}</span>
+            </p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function StockComparison() {
-  const [selectedStocks, setSelectedStocks] = useState<string[]>(["BBCA", "BBRI", "TLKM"])
-  const [open, setOpen] = useState(false)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [selectedStocks, setSelectedStocks] = useState<string[]>(["AGRO.JK", "ADES.JK"]);
+  const [open, setOpen] = useState(false);
+  const [priceData, setPriceData] = useState<{ [key: string]: PriceData[] }>({});
+  const [emitens, setEmitens] = useState<Emiten[]>([]);
+
+  // Fetch daftar emiten saat komponen dimuat
+  useEffect(() => {
+    async function loadEmitens() {
+      const fetchedEmitens = await fetchEmiten();
+      setEmitens(fetchedEmitens);
+    }
+    loadEmitens();
+  }, []);
+
+  // Fetch data harga untuk selected stocks
+  useEffect(() => {
+    async function fetchAllPriceData() {
+      const data: { [key: string]: PriceData[] } = {};
+      for (const stock of selectedStocks) {
+        const response = await fetchPriceData(stock, "yearly");
+        data[stock] = response;
+      }
+      setPriceData(data);
+    }
+    if (selectedStocks.length > 0) {
+      fetchAllPriceData();
+    }
+  }, [selectedStocks]);
 
   const handleAddStock = (value: string) => {
     if (selectedStocks.length < 5 && !selectedStocks.includes(value)) {
-      setSelectedStocks([...selectedStocks, value])
+      setSelectedStocks([...selectedStocks, value]);
     }
-    setOpen(false)
-  }
+    setOpen(false);
+  };
 
   const handleRemoveStock = (value: string) => {
-    setSelectedStocks(selectedStocks.filter((stock) => stock !== value))
-  }
+    setSelectedStocks(selectedStocks.filter((stock) => stock !== value));
+  };
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    // Set canvas dimensions
-    canvas.width = canvas.offsetWidth
-    canvas.height = canvas.offsetHeight
-
-    // Chart settings
-    const padding = 40
-    const chartWidth = canvas.width - padding * 2
-    const chartHeight = canvas.height - padding * 2
-
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    // Draw chart background
-    ctx.fillStyle = "rgba(255, 255, 255, 0.5)"
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-    // Sample data - would come from API in real app
-    const stockData = {
-      BBCA: [100, 102, 105, 103, 106, 110, 112, 115, 118, 120, 122, 124],
-      BBRI: [100, 103, 106, 104, 108, 112, 110, 113, 116, 119, 121, 123],
-      TLKM: [100, 101, 103, 102, 104, 105, 106, 108, 107, 109, 110, 112],
-      ASII: [100, 98, 97, 99, 101, 103, 102, 104, 106, 105, 107, 108],
-      UNVR: [100, 99, 101, 100, 102, 101, 103, 104, 105, 106, 107, 108],
-    }
-
-    // Find min and max values across all selected stocks
-    let minValue = Number.MAX_VALUE
-    let maxValue = Number.MIN_VALUE
-
-    selectedStocks.forEach((stock) => {
-      const data = stockData[stock as keyof typeof stockData]
-      if (data) {
-        minValue = Math.min(minValue, ...data)
-        maxValue = Math.max(maxValue, ...data)
+  // Prepare chart data with original prices
+  const chartData = selectedStocks.reduce((acc, stock) => {
+    const stockData = priceData[stock] || [];
+    stockData.forEach((item) => {
+      const existing = acc.find((d) => d.Date === item.Date);
+      if (existing) {
+        existing[stock] = item.Close;
+      } else {
+        acc.push({ Date: item.Date, [stock]: item.Close });
       }
-    })
-
-    // Add some padding to min/max
-    minValue = minValue * 0.95
-    maxValue = maxValue * 1.05
-    const valueRange = maxValue - minValue
-
-    // Draw grid lines
-    ctx.strokeStyle = "rgba(30, 58, 138, 0.1)"
-    ctx.lineWidth = 1
-
-    // Horizontal grid lines
-    const gridLines = 5
-    for (let i = 0; i <= gridLines; i++) {
-      const y = padding + (chartHeight / gridLines) * i
-      ctx.beginPath()
-      ctx.moveTo(padding, y)
-      ctx.lineTo(padding + chartWidth, y)
-      ctx.stroke()
-
-      // Add price labels
-      const value = maxValue - (valueRange / gridLines) * i
-      ctx.fillStyle = "#64748b"
-      ctx.font = "10px sans-serif"
-      ctx.textAlign = "right"
-      ctx.fillText(`${value.toFixed(0)}%`, padding - 5, y + 3)
-    }
-
-    // Draw vertical grid lines (months)
-    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]
-
-    for (let i = 0; i < months.length; i++) {
-      const x = padding + (chartWidth / (months.length - 1)) * i
-      ctx.beginPath()
-      ctx.moveTo(x, padding + chartHeight)
-      ctx.lineTo(x, padding + chartHeight + 5)
-      ctx.stroke()
-
-      // Add month labels
-      ctx.fillStyle = "#64748b"
-      ctx.font = "10px sans-serif"
-      ctx.textAlign = "center"
-      ctx.fillText(months[i], x, padding + chartHeight + 15)
-    }
-
-    // Draw lines for each selected stock
-    const colors = {
-      BBCA: "#1E3A8A",
-      BBRI: "#10B981",
-      TLKM: "#6366F1",
-      ASII: "#F59E0B",
-      UNVR: "#EC4899",
-    }
-
-    selectedStocks.forEach((stock) => {
-      const data = stockData[stock as keyof typeof stockData]
-      if (!data) return
-
-      // Draw line
-      ctx.strokeStyle = colors[stock as keyof typeof colors] || "#000000"
-      ctx.lineWidth = 2
-      ctx.beginPath()
-
-      // Plot data points
-      data.forEach((value, index) => {
-        const x = padding + (chartWidth / (data.length - 1)) * index
-        const y = padding + chartHeight - ((value - minValue) / valueRange) * chartHeight
-
-        if (index === 0) {
-          ctx.moveTo(x, y)
-        } else {
-          ctx.lineTo(x, y)
-        }
-      })
-      ctx.stroke()
-
-      // Add data points
-      ctx.fillStyle = "#ffffff"
-      ctx.strokeStyle = colors[stock as keyof typeof colors] || "#000000"
-      ctx.lineWidth = 2
-
-      data.forEach((value, index) => {
-        const x = padding + (chartWidth / (data.length - 1)) * index
-        const y = padding + chartHeight - ((value - minValue) / valueRange) * chartHeight
-
-        // Only draw points for first, last, and every 3rd data point
-        if (index === 0 || index === data.length - 1 || index % 3 === 0) {
-          ctx.beginPath()
-          ctx.arc(x, y, 4, 0, Math.PI * 2)
-          ctx.fill()
-          ctx.stroke()
-        }
-      })
-    })
-
-    // Draw legend
-    const legendX = padding
-    const legendY = padding - 15
-    const legendSpacing = 80
-
-    selectedStocks.forEach((stock, index) => {
-      const x = legendX + index * legendSpacing
-
-      // Draw color line
-      ctx.strokeStyle = colors[stock as keyof typeof colors] || "#000000"
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      ctx.moveTo(x, legendY)
-      ctx.lineTo(x + 15, legendY)
-      ctx.stroke()
-
-      // Draw label
-      ctx.fillStyle = "#64748b"
-      ctx.font = "10px sans-serif"
-      ctx.textAlign = "left"
-      ctx.textBaseline = "middle"
-      ctx.fillText(stock, x + 20, legendY)
-    })
-  }, [selectedStocks])
+    });
+    return acc;
+  }, [] as { Date: string; [key: string]: number | string }[]);
 
   return (
     <Card className="bg-white/80 backdrop-blur-sm border-secondary/20 card-hover">
       <CardHeader>
-        <CardTitle>Perbandingan Saham</CardTitle>
-        <CardDescription>Bandingkan performa relatif beberapa saham (basis 100)</CardDescription>
+        <CardTitle className="text-lg">Perbandingan Saham</CardTitle>
+        <CardDescription className="text-xs">Bandingkan performa relatif beberapa saham</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-2 mb-4">
           {selectedStocks.map((stock) => (
-            <Badge key={stock} className="bg-primary/10 text-primary border-primary/30 flex items-center gap-1 py-1.5">
+            <Badge key={stock} className="bg-primary/10 text-primary border-primary/30 flex items-center gap-1 py-1 text-xs">
               {stock}
               <Button
                 variant="ghost"
@@ -222,7 +149,6 @@ export default function StockComparison() {
               </Button>
             </Badge>
           ))}
-
           {selectedStocks.length < 5 && (
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
@@ -230,33 +156,34 @@ export default function StockComparison() {
                   variant="outline"
                   role="combobox"
                   aria-expanded={open}
-                  className="border-dashed border-secondary/50 hover:bg-accent/10 hover:text-accent hover:border-accent h-8"
+                  className="border-dashed border-secondary/50 hover:bg-accent/10 hover:text-accent h-8 text-xs"
                 >
-                  <Plus className="h-4 w-4 mr-1" />
+                  <Plus className="h-3 w-3 mr-1" />
                   Tambah Saham
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[200px] p-0">
                 <Command>
-                  <CommandInput placeholder="Cari saham..." />
+                  <CommandInput placeholder="Cari saham..." className="text-xs" />
                   <CommandList>
-                    <CommandEmpty>Saham tidak ditemukan.</CommandEmpty>
+                    <CommandEmpty className="text-xs">Saham tidak ditemukan.</CommandEmpty>
                     <CommandGroup>
-                      {stocks.map((stock) => (
+                      {emitens.map((emiten) => (
                         <CommandItem
-                          key={stock.value}
-                          value={stock.value}
-                          onSelect={() => handleAddStock(stock.value)}
-                          disabled={selectedStocks.includes(stock.value)}
+                          key={emiten.ticker}
+                          value={emiten.ticker}
+                          onSelect={() => handleAddStock(emiten.ticker)}
+                          disabled={selectedStocks.includes(emiten.ticker)}
+                          className="text-xs"
                         >
                           <Check
                             className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedStocks.includes(stock.value) ? "opacity-100" : "opacity-0",
+                              "mr-2 h-3 w-3",
+                              selectedStocks.includes(emiten.ticker) ? "opacity-100" : "opacity-0"
                             )}
                           />
-                          {stock.value} - {stock.label.split(" ")[0]}
+                          {emiten.ticker} - {emiten.name}
                         </CommandItem>
                       ))}
                     </CommandGroup>
@@ -270,31 +197,93 @@ export default function StockComparison() {
         <Separator className="my-4 bg-secondary/30" />
 
         <div className="h-[400px] w-full">
-          <canvas ref={canvasRef} className="w-full h-full" />
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={chartData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis
+                  dataKey="Date"
+                  tick={{ fontSize: 10 }}
+                  tickFormatter={(value: string) => {
+                    const date = new Date(value);
+                    return date.toLocaleDateString("id-ID", { month: "short", year: "numeric" });
+                  }}
+                />
+                <YAxis
+                  tick={{ fontSize: 10 }}
+                  tickFormatter={(value) => {
+                    // Default to the first stock for percentage calculation
+                    return `Rp ${Math.round(value).toLocaleString("id-ID")}`;
+                  }}
+                />
+                <Tooltip content={<CustomTooltip selectedStocks={selectedStocks} />} />
+                <Legend wrapperStyle={{ fontSize: "12px" }} />
+                {selectedStocks.map((stock, index) => (
+                  <Line
+                    key={stock}
+                    type="monotone"
+                    dataKey={stock}
+                    stroke={["#1E3A8A", "#10B981", "#6366F1", "#F59E0B", "#EC4899"][index % 5]}
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 6 }}
+                    name={stock}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+              Tidak ada data untuk ditampilkan
+            </div>
+          )}
         </div>
 
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {selectedStocks.slice(0, 3).map((stock) => {
-            const stockInfo = stocks.find((s) => s.value === stock)
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {selectedStocks.map((stock) => {
+            const emiten = emitens.find((e) => e.ticker === stock);
+            const data = priceData[stock] || [];
+            let latestPrice = 0;
+            let initialPrice = 0;
+            let performance = 0;
+
+            if (data.length > 0) {
+              // Find the latest price (most recent date)
+              latestPrice = data[data.length - 1].Close;
+
+              // Find the initial price from 1 year ago (approximate)
+              const oneYearAgo = new Date();
+              oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1); // May 11, 2024
+              const initialData = data
+                .filter((item) => new Date(item.Date) <= oneYearAgo)
+                .sort((a, b) => new Date(b.Date).getTime() - new Date(a.Date).getTime())[0]; // Closest to 1 year ago
+              initialPrice = initialData ? initialData.Close : latestPrice; // Fallback to latest if no earlier data
+
+              // Calculate performance as percentage change
+              performance = initialPrice !== 0 ? ((latestPrice - initialPrice) / initialPrice) * 100 : 0;
+            }
+
             return (
-              <div key={stock} className="bg-secondary/20 p-3 rounded-lg">
+              <div key={stock} className="bg-secondary/20 p-2 rounded-lg">
                 <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-primary text-white">{stock}</Badge>
-                    <span className="text-sm font-medium">{stockInfo?.label.split(" ")[0]}</span>
+                  <div className="flex items-center gap-1">
+                    <Badge className="bg-primary text-white text-xs">{stock}</Badge>
+                    <span className="text-xs font-medium">{emiten?.name || stock}</span>
                   </div>
-                  <Badge variant="outline" className="bg-secondary/30 text-muted-foreground">
-                    {stockInfo?.sector}
-                  </Badge>
                 </div>
-                <div className="mt-2 text-sm text-muted-foreground">
-                  Performa 1 Tahun: <span className="text-accent font-medium">+24%</span>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Performa 1 Tahun: <span className={`font-medium ${performance >= 0 ? "text-accent" : "text-red-500"}`}>
+                    {performance.toFixed(1)}%
+                  </span>
                 </div>
               </div>
-            )
+            );
           })}
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
