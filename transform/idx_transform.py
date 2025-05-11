@@ -1,7 +1,13 @@
-import os
-import json
+from pyspark.sql import SparkSession
+from pyspark import RDD
 import xmltodict
-import shutil
+import json
+import os
+
+# Initialize Spark session
+spark = SparkSession.builder \
+    .appName("XBRL Financial Data Extraction") \
+    .getOrCreate()
 
 # Function to extract financials using the correct context
 def extract_financials(xbrl_dict):
@@ -82,41 +88,44 @@ def extract_financials(xbrl_dict):
 # Path to the extracted folder where the XBRL files are stored
 extracted_folder = "/app/output/idx_extracted"  # Folder where ZIP files were extracted to
 
-# Process each extracted XBRL file
-all_data = []
-
+# Get all files from the extracted folder
+xbrl_files = []
 for company in os.listdir(extracted_folder):
     company_path = os.path.join(extracted_folder, company)
 
     if os.path.isdir(company_path):
         for file in os.listdir(company_path):
             if file.endswith(".xbrl"):  # Process only .xbrl files
-                xbrl_file_path = os.path.join(company_path, file)
+                xbrl_files.append(os.path.join(company_path, file))
 
-                try:
-                    # Read and parse the XBRL file
-                    with open(xbrl_file_path, 'rb') as xbrl_file:
-                        xbrl_content = xbrl_file.read()
-                        xbrl_dict = xmltodict.parse(xbrl_content)
+# Convert the list of XBRL files into an RDD
+rdd = spark.sparkContext.parallelize(xbrl_files)
 
-                    # Extract financial data using the function
-                    financial_data = extract_financials(xbrl_dict)
+# Function to process each XBRL file
+def process_xbrl_file(file_path):
+    try:
+        with open(file_path, 'rb') as xbrl_file:
+            xbrl_content = xbrl_file.read()
+            xbrl_dict = xmltodict.parse(xbrl_content)
 
-                    # Add company name and file name to the results
-                    financial_data['company'] = company
-                    financial_data['filename'] = file
+        # Extract financial data
+        financial_data = extract_financials(xbrl_dict)
+        financial_data['filename'] = file_path  # Add the filename for reference
 
-                    all_data.append(financial_data)  # Store extracted data
+        return financial_data
+    except Exception as e:
+        print(f"Error processing {file_path}: {e}")
+        return None
 
-                    print(f"Processed {file} for {company}")
+# Process the XBRL files in parallel
+processed_data = rdd.map(process_xbrl_file).filter(lambda x: x is not None).collect()
 
-                except Exception as e:
-                    print(f"Error processing {file} for {company}: {e}")
-
-# Save all extracted financial data to a JSON file
+# Save the results to a JSON file
 json_output_file = "/app/output/combined_data.json"
-
 with open(json_output_file, 'w', encoding='utf-8') as json_file:
-    json.dump(all_data, json_file, indent=4, ensure_ascii=False)
+    json.dump(processed_data, json_file, indent=4, ensure_ascii=False)
 
 print(f"All data extracted and saved to {json_output_file}")
+
+# Stop the Spark session
+spark.stop()

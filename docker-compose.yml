@@ -164,17 +164,17 @@ services:
   #     IQPLUS_OUTPUT_PATH: /app/output/iqplus_output.json
   #   command: ["python", "iqplus_extract.py"]  # Menjalankan iqplus_extract.py
 
-  # transform_idx:
-  #   build:
-  #     context: ./transform  # The directory containing your transform code
-  #   image: transformer
-  #   container_name: transform_service
-  #   volumes:
-  #     - ./output:/app/output  # Mount the output directory for saving results
-  #     - ./output/idx_extracted:/app/extract/idx_extracted  # Mount the extracted data folder from output
-  #   command: ["python", "transform_idx.py"]  # Command to run your transform script
-  #   depends_on:
-  #     - extract_idx  # Ensure the extract_idx service is completed first
+  transform_idx:
+    build:
+      context: ./transform  # The directory containing your transform code
+    image: transformer
+    container_name: transform_service
+    volumes:
+      - ./output:/app/output  # Mount the output directory for saving results
+      - ./output/idx_extracted:/app/extract/idx_extracted  # Mount the extracted data folder from output
+    command: ["python", "idx_transform.py"]  # Command to run your transform script
+    # depends_on:
+    #   - extract_idx  # Ensure the extract_idx service is completed first
 
   load_yfinance: #ini udh aman
     profiles: ["build"]
