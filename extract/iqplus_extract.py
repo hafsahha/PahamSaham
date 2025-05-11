@@ -222,7 +222,7 @@ def main():
     args = parser.parse_args()
     
     # Get output path from environment variable or use default
-    output_dir = os.environ.get('IQPLUS_OUTPUT_PATH', 'output/')
+    output_dir = os.environ.get('IQPLUS_OUTPUT_PATH', '../output/')
     logger.info(f"Using output directory: {output_dir}")
 
     # Get links based on either time range or count
