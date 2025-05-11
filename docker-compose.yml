@@ -110,8 +110,6 @@ services:
       - "3000:3000"
     networks:
       - saham_net
-    volumes:
-      - ./dashboard:/app
     environment:
       - NODE_ENV=production
 
@@ -164,8 +162,9 @@ services:
       IQPLUS_OUTPUT_PATH: /app/output/iqplus_output.json
     command: >
       sh -c "python iqplus_extract.py --category market --output /app/output/ --pages 2"
-      
+
   transform_idx:
+    profiles: ["build"]
     build:
       context: ./transform  # The directory containing your transform code
     image: transformer
@@ -174,8 +173,6 @@ services:
       - ./output:/app/output  # Mount the output directory for saving results
       - ./output/idx_extracted:/app/extract/idx_extracted  # Mount the extracted data folder from output
     command: ["python", "idx_transform.py"]  # Command to run your transform script
-    # depends_on:
-    #   - extract_idx  # Ensure the extract_idx service is completed first
 
   load_yfinance:
     profiles: ["build"]
