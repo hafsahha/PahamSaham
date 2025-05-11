@@ -255,7 +255,7 @@ services:
     volumes:
       - ./output:/app/output
     environment:
-      MONGO_COLLECTION: "idx_data_testing"
+      MONGO_COLLECTION: "idx_data"
       INPUT_PATH: /app/output/idx_output.json
       
   load_iqplus:
