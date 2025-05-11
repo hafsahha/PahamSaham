@@ -25,4 +25,5 @@ ENV PATH="./node_modules/.bin:$PATH"
 RUN ls -la node_modules/.bin && node_modules/.bin/next --version
 
 EXPOSE 3000
-CMD ["npm", "run", "dev"]
+
+CMD ["npm", "start"]
