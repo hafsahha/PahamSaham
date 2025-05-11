@@ -1,0 +1,6 @@
+FROM ollama/ollama
+# Install curl
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+COPY ollama-start.sh /ollama-start.sh
+RUN chmod +x /ollama-start.sh
+ENTRYPOINT ["/bin/bash", "/ollama-start.sh"]
