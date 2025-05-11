@@ -103,6 +103,7 @@ services:
       - saham_net
 
   dashboard: 
+    profiles: ["dashboard"]
     build:
       context: ./dashboard
       dockerfile: Dockerfile
@@ -162,9 +163,12 @@ services:
     volumes:
       - ./output:/app/output
     environment:
-      IQPLUS_OUTPUT_PATH: /app/output/iqplus_output.json
-    command: >
-      sh -c "python iqplus_extract.py --category market --output /app/output/ --pages 5"
+      IQPLUS_OUTPUT_PATH: /app/output/
+    command: |
+      sh -c "
+        python iqplus_extract.py --category market &&
+        python iqplus_extract.py --category stock
+      "
 
   # ================================== TRANSFORM =====================================
   transform_idx:
@@ -192,14 +196,23 @@ services:
     volumes:
       - ./output:/app/output 
     environment:
-      OUTPUT_PATH: /app/output
+      OUTPUT_PATH: /app/output/iqplus_output_test.json
       INPUT_PATH: /app/output
-      OLLAMA_API: http://ollama:11434
-    command: >
-      sh -c "python iqplus_transform.py --category market"
+      # OLLAMA_API: http://ollama:11434
+      OLLAMA_API: http://host.docker.internal:11434
+    deploy:
+      resources:
+        limits:
+          memory: 10g
+    command: |
+      sh -c "
+        python iqplus_transform.py --category market &&
+        python iqplus_transform.py --category stock
+      "
 
   # LLM buat transform iqplus
   ollama:
+    profiles: ["dev"]
     build:
       context: .
       dockerfile: Dockerfile.ollama
