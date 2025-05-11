@@ -177,6 +177,20 @@ services:
       INPUT_PATH: /app/output/idx_extracted
     command: ["python", "idx_transform.py"]  # Command to run your transform script
 
+  transform_iqplus:
+    build:
+      context: ./transform  # The directory containing your transform code
+    image: transformer
+    container_name: transform_service
+    volumes:
+      - ./output:/app/output  # Mount the output directory for saving results
+      - ./output/iqplus_extracted:/app/output/iqplus_extracted  # Mount the extracted data folder from output
+    environment:
+      OUTPUT_PATH: /app/output/iqplus_extracted
+      INPUT_PATH: /app/output/iqplus_extracted
+    command: >
+      sh -c "python iqplus_transform.py --category stock"
+
   load_yfinance:
     profiles: ["build"]
     build:
