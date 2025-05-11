@@ -1,14 +1,9 @@
 import os
 import json
-from pyspark.sql import SparkSession
+import xmltodict
 import shutil
 
-# Initialize Spark session
-spark = SparkSession.builder \
-    .appName("Transform XBRL Data") \
-    .getOrCreate()
-
-# Define the function to extract financials from the XBRL data
+# Function to extract financials using the correct context
 def extract_financials(xbrl_dict):
     tags = {
         "Revenue": ["idx-cor:SalesAndRevenue"],
@@ -75,14 +70,21 @@ def extract_financials(xbrl_dict):
                     if context['@id'] == 'CurrentYearDuration':
                         result["EndDate"] = context['period']['endDate']
 
+    # Handle the case where EntityName is outside the context and is in idx-dei:EntityName
+    entity_name_outside_context = xbrl_dict.get('xbrl', {}).get('idx-dei:EntityName', None)
+    if entity_name_outside_context:
+        # If idx-dei:EntityName is found, extract the name
+        if isinstance(entity_name_outside_context, dict) and '#text' in entity_name_outside_context:
+            result["EntityName"] = entity_name_outside_context['#text']
+
     return result
 
-# Path to the extracted folder where XBRL files are stored
-extracted_folder = '/app/output/idx_extracted'  # Update with the correct path for Docker
-
-all_data = []
+# Path to the extracted folder where the XBRL files are stored
+extracted_folder = "/app/output/idx_extracted"  # Folder where ZIP files were extracted to
 
 # Process each extracted XBRL file
+all_data = []
+
 for company in os.listdir(extracted_folder):
     company_path = os.path.join(extracted_folder, company)
 
@@ -111,27 +113,10 @@ for company in os.listdir(extracted_folder):
                 except Exception as e:
                     print(f"Error processing {file} for {company}: {e}")
 
-# Create Spark DataFrame from all extracted data
-spark_df = spark.createDataFrame(all_data)
+# Save all extracted financial data to a JSON file
+json_output_file = "/app/output/combined_data.json"
 
-# Show Spark DataFrame (optional for debugging)
-spark_df.show(truncate=False)
-
-# Save to JSON file using Spark
-json_output_file = '/app/output/combined_data.json'
-spark_df.write.json(json_output_file, mode='overwrite')
+with open(json_output_file, 'w', encoding='utf-8') as json_file:
+    json.dump(all_data, json_file, indent=4, ensure_ascii=False)
 
 print(f"All data extracted and saved to {json_output_file}")
-
-# Clean up the extracted folder after processing
-import shutil
-def cleanup_extracted_folder():
-    """Remove extracted folder after processing"""
-    try:
-        if os.path.exists(extracted_folder):
-            shutil.rmtree(extracted_folder)  # Remove idx_extracted folder
-            print(f"Cleaned up folder: {extracted_folder}")
-    except Exception as e:
-        print(f"Error during cleanup: {str(e)}")
-
-cleanup_extracted_folder()
