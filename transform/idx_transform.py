@@ -149,7 +149,7 @@ def clear_folder(folder_path):
     except Exception as e:
         print(f"Error clearing folder {folder_path}: {e}")
 
-# clear_folder("/app/output/idx_zip")
-# clear_folder("/app/output/idx_extracted")
+clear_folder("/app/output/idx_zip")
+clear_folder("/app/output/idx_extracted")
 
 print("Folders cleared but folder structure remains.")
