@@ -1,5 +1,6 @@
 services:
-  postgres:
+  #=================================== ini buat AIRFLOW =================================
+  postgres: # db buat nyimpen data log, task, dll punya airflow
     container_name: postgres-db
     image: postgres:13
     environment:
@@ -17,7 +18,7 @@ services:
       timeout: 5s
       retries: 5
 
-  airflow-init:
+  airflow-init: # inisiasi database sama akun buat airflow
     container_name: airflow-init
     image: apache/airflow:2.6.3
     depends_on:
@@ -45,7 +46,7 @@ services:
     networks:
       - saham_net
 
-  airflow-webserver:
+  airflow-webserver: 
     container_name: airflow-webserver
     image: apache/airflow:2.6.3
     depends_on:
@@ -90,7 +91,8 @@ services:
     environment:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow 
 
-  api: #ini udh aman
+  # ================================ API & WEB (dashboard) ===============================
+  api: 
     build:
       context: ./api
     image: api
@@ -100,7 +102,7 @@ services:
     networks:
       - saham_net
 
-  dashboard: # aman
+  dashboard: 
     build:
       context: ./dashboard
       dockerfile: Dockerfile
@@ -113,23 +115,24 @@ services:
     environment:
       - NODE_ENV=production
 
-  extract_yfinance: #ini udh aman
+  # ===================================== EXTRACTOR ===================================
+  extract_yfinance: 
     profiles: ["dev"]
     build:
       context: . 
       dockerfile: extract/Dockerfile
-    image: extraction  # Nama image yang digunakan
+    image: extraction
     container_name: extract_yfinance
     volumes:
-      - ./output:/app/output  # Mount folder output dari host ke container
+      - ./output:/app/output 
     environment:
       YFINANCE_OUTPUT_PATH: /app/output/yfinance_output.json
-    command: ["python", "yfinance_extract.py"]  # Menjalankan yfinance_extract.py
+    command: ["python", "yfinance_extract.py"] 
 
-  extract_idx: #ini udh aman
+  extract_idx: 
     profiles: ["dev"]
     build:
-      context: .  # Path to the root directory, not just extract
+      context: . 
       dockerfile: extract/Dockerfile
     image: extraction
     container_name: extract_idx
@@ -145,7 +148,7 @@ services:
       resources:
         limits:
           memory: 2G
-    shm_size: '2G'  # Shared memory untuk Chrome
+    shm_size: '2G'
     restart: on-failure
     command: ["python", "idx_extract.py"]
 
@@ -163,30 +166,31 @@ services:
     command: >
       sh -c "python iqplus_extract.py --category market --output /app/output/ --pages 5"
 
+  # ================================== TRANSFORM =====================================
   transform_idx:
     profiles: ["dev"]
     build:
-      context: ./transform  # The directory containing your transform code
+      context: ./transform 
     image: transformer
     container_name: transform_idx
     volumes:
-      - ./output:/app/output  # Mount the output directory for saving results
-      - ./output/idx_extracted:/app/extract/idx_extracted  # Mount the extracted data folder from output
+      - ./output:/app/output 
+      - ./output/idx_extracted:/app/extract/idx_extracted 
     environment:
       OUTPUT_PATH: /app/output/idx_output.json
       INPUT_PATH: /app/output/idx_extracted
-    command: ["python", "idx_transform.py"]  # Command to run your transform script
+    command: ["python", "idx_transform.py"]  
 
   transform_iqplus:
     profiles: ["dev"]
     build:
-      context: ./transform  # The directory containing your transform code
+      context: ./transform 
     image: transformer
     container_name: transform_iqplus
     networks:
       - saham_net
     volumes:
-      - ./output:/app/output  # Mount the output directory for saving results
+      - ./output:/app/output 
     environment:
       OUTPUT_PATH: /app/output
       INPUT_PATH: /app/output
@@ -194,6 +198,7 @@ services:
     command: >
       sh -c "python iqplus_transform.py --category market"
 
+  # LLM buat transform iqplus
   ollama:
     build:
       context: .
@@ -213,6 +218,7 @@ services:
         limits:
           memory: 10G
 
+  # ============================= LOADER ==============================
   load_yfinance:
     profiles: ["dev"]
     build:
