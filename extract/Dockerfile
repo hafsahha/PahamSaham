@@ -54,3 +54,4 @@ ENV zip_extracted_path=/output/idx_extracted
 
 # Default command
 CMD ["python", "idx_extract.py"]
+# CMD ["python", "iqplus_extract.py", "--pages", "2"]

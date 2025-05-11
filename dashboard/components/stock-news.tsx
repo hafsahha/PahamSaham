@@ -52,8 +52,8 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
   ]
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm border-secondary/20 overflow-hidden">
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-accent"></div>
+    <Card className="bg-white/80 dark:bg-card backdrop-blur-sm border-secondary/20 dark:border-border overflow-hidden">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-accent to-primary/70"></div>
       <CardHeader>
         <CardTitle>Berita Terkini</CardTitle>
         <CardDescription>Berita dan analisis terbaru dari pasar saham Indonesia</CardDescription>
@@ -63,7 +63,7 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
           {newsItems.slice(0, fullPage ? undefined : 3).map((news, index) => (
             <div key={index} className="group">
               <div className="space-y-2">
-                <h3 className="font-medium hover:text-primary cursor-pointer group-hover:text-primary transition-colors">
+                <h3 className="font-medium hover:text-primary cursor-pointer group-hover:text-primary transition-colors dark:text-foreground">
                   {news.title}
                 </h3>
                 <div className="flex items-center text-sm text-muted-foreground">
@@ -73,13 +73,13 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
                 </div>
                 {fullPage && (
                   <>
-                    <p className="text-sm text-muted-foreground">{news.snippet}</p>
+                    <p className="text-sm text-muted-foreground dark:text-muted-foreground">{news.snippet}</p>
                     <div className="flex flex-wrap gap-1 mt-2">
                       {news.tags.map((tag) => (
                         <Badge
                           key={tag}
                           variant="outline"
-                          className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                          className="bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary border-primary/30 hover:bg-primary/20"
                         >
                           {tag}
                         </Badge>
@@ -93,7 +93,7 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
                       <Badge
                         key={tag}
                         variant="outline"
-                        className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                        className="bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary border-primary/30 hover:bg-primary/20"
                       >
                         {tag}
                       </Badge>
@@ -101,14 +101,16 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
                   </div>
                 )}
               </div>
-              {index < (fullPage ? newsItems.length - 1 : 2) && <Separator className="mt-4 bg-secondary/30" />}
+              {index < (fullPage ? newsItems.length - 1 : 2) && (
+                <Separator className="mt-4 bg-secondary/30 dark:bg-border/50" />
+              )}
             </div>
           ))}
         </div>
         {!fullPage && (
           <Button
             variant="outline"
-            className="w-full mt-4 border-secondary/30 hover:bg-primary/10 hover:text-primary hover:border-primary/50"
+            className="w-full mt-4 border-secondary/30 dark:border-border hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 dark:hover:text-primary hover:border-primary/50"
           >
             Lihat Semua Berita
           </Button>
