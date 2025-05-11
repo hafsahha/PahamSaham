@@ -149,7 +149,7 @@ def clear_folder(folder_path):
         print(f"Error clearing folder {folder_path}: {e}")
 
 # Example usage: clear the idx_zip and idx_extracted folders after processing
-# clear_folder("/app/output/idx_zip")
-# clear_folder("/app/output/idx_extracted")
+clear_folder("/app/output/idx_zip")
+clear_folder("/app/output/idx_extracted")
 
 print("Folders cleared but folder structure remains.")
