@@ -1,4 +1,95 @@
 services:
+  postgres:
+    container_name: postgres-db
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+      POSTGRES_CONFIG: "-c lock_timeout=30000"
+    networks:
+      - saham_net
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  airflow-init:
+    container_name: airflow-init
+    image: apache/airflow:2.6.3
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    command: |
+      bash -c '
+        airflow db init &&
+        airflow users create \
+          --username admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@example.com \
+          --password admin
+      '
+    networks:
+      - saham_net
+
+  airflow-webserver:
+    container_name: airflow-webserver
+    image: apache/airflow:2.6.3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    networks:
+      - saham_net
+    volumes:
+      - ./airflow/requirements.txt:/opt/airflow/requirements.txt 
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./output:/opt/airflow/output
+    command: airflow webserver
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow 
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    ports:
+      - "8080:8080"
+
+  airflow-scheduler:
+    container_name: airflow-scheduler
+    image: apache/airflow:2.6.3
+    command: airflow scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    networks:
+      - saham_net
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./output:/opt/airflow/output 
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow 
+
   api: #ini udh aman
     build:
       context: ./api
@@ -9,7 +100,23 @@ services:
     networks:
       - saham_net
 
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    image: next-dashboard:latest
+    container_name: dashboard
+    ports:
+      - "3000:3000"
+    networks:
+      - saham_net
+    volumes:
+      - ./dashboard:/app
+    environment:
+      - NODE_ENV=production
+
   extract_yfinance: #ini udh aman
+    profiles: ["build"]
     build:
       context: . 
       dockerfile: extract/Dockerfile
@@ -22,6 +129,7 @@ services:
     command: ["python", "yfinance_extract.py"]  # Menjalankan yfinance_extract.py
 
   extract_idx: #ini udh aman
+    profiles: ["build"]
     build:
       context: .  # Path to the root directory, not just extract
       dockerfile: extract/Dockerfile
@@ -43,19 +151,33 @@ services:
     restart: on-failure
     command: ["python", "idx_extract.py"]
 
-  extract_iqplus:
-    build:
-      context: .  
-      dockerfile: extract/Dockerfile
-    image: extraction  # Menggunakan image yang sama dengan extract_yfinance dan extract_idx
-    container_name: extract_iqplus
-    volumes:
-      - ./output:/app/output
-    environment:
-      IQPLUS_OUTPUT_PATH: /app/output/iqplus_output.json
-    command: ["python", "iqplus_extract.py"]  # Menjalankan iqplus_extract.py
+  # extract_iqplus:
+  #   profiles: ["build"]
+  #   build:
+  #     context: .  
+  #     dockerfile: extract/Dockerfile
+  #   image: extraction  # Menggunakan image yang sama dengan extract_yfinance dan extract_idx
+  #   container_name: extract_iqplus
+  #   volumes:
+  #     - ./output:/app/output
+  #   environment:
+  #     IQPLUS_OUTPUT_PATH: /app/output/iqplus_output.json
+  #   command: ["python", "iqplus_extract.py"]  # Menjalankan iqplus_extract.py
+
+  # transform_idx:
+  #   build:
+  #     context: ./transform  # The directory containing your transform code
+  #   image: transformer
+  #   container_name: transform_service
+  #   volumes:
+  #     - ./output:/app/output  # Mount the output directory for saving results
+  #     - ./output/idx_extracted:/app/extract/idx_extracted  # Mount the extracted data folder from output
+  #   command: ["python", "transform_idx.py"]  # Command to run your transform script
+  #   depends_on:
+  #     - extract_idx  # Ensure the extract_idx service is completed first
 
   load_yfinance: #ini udh aman
+    profiles: ["build"]
     build:
       context: ./load
       dockerfile: Dockerfile
@@ -65,17 +187,8 @@ services:
       - ./output:/app/output
     command: ["python", "yfinance_load.py"]
 
-  transform_idx:
-    build:
-      context: ./transform  # The directory containing your transform code
-    image: transformer
-    container_name: transform_service
-    volumes:
-      - ./output:/app/output  # Mount the output directory for saving results
-      - ./output/idx_extracted:/app/extract/idx_extracted  # Mount the extracted data folder from output
-    command: ["python", "idx_transform.py"]  # Command to run your transform script
-    # depends_on:
-    #   - extract_idx  # Ensure the extract_idx service is completed first
+volumes:
+  postgres-db:   
 
 networks:
   saham_net:

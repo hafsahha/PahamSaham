@@ -1,0 +1,119 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+
+interface StockNewsProps {
+  fullPage?: boolean
+}
+
+export default function StockNews({ fullPage = false }: StockNewsProps) {
+  const newsItems = [
+    {
+      title: "Bank Indonesia Pertahankan Suku Bunga Acuan di Level 5,75%",
+      source: "CNBC Indonesia",
+      time: "2 jam yang lalu",
+      tags: ["BBRI", "BBCA", "BMRI"],
+      snippet:
+        "Bank Indonesia (BI) memutuskan untuk mempertahankan suku bunga acuan atau BI Rate di level 5,75% dalam Rapat Dewan Gubernur (RDG) bulanan. Keputusan ini sejalan dengan upaya menjaga stabilitas nilai tukar rupiah dan mengendalikan inflasi.",
+    },
+    {
+      title: "Telkom Indonesia Luncurkan Layanan 5G di 10 Kota Besar",
+      source: "Investor Daily",
+      time: "4 jam yang lalu",
+      tags: ["TLKM"],
+      snippet:
+        "PT Telkom Indonesia Tbk (TLKM) resmi meluncurkan layanan 5G di 10 kota besar di Indonesia. Langkah ini merupakan bagian dari strategi perseroan untuk memperkuat posisinya di industri telekomunikasi dan digital.",
+    },
+    {
+      title: "Astra International Catat Pertumbuhan Laba 15% di Kuartal II-2023",
+      source: "Bisnis.com",
+      time: "6 jam yang lalu",
+      tags: ["ASII"],
+      snippet:
+        "PT Astra International Tbk (ASII) mencatatkan pertumbuhan laba bersih sebesar 15% secara year-on-year (yoy) pada kuartal II-2023. Kinerja positif ini didorong oleh kontribusi dari segmen otomotif dan jasa keuangan.",
+    },
+    {
+      title: "BRI Agro Merger dengan BRI, Saham AGRO Melesat",
+      source: "Kontan",
+      time: "8 jam yang lalu",
+      tags: ["BBRI", "AGRO"],
+      snippet:
+        "Saham PT Bank Rakyat Indonesia Agroniaga Tbk (AGRO) melesat setelah pengumuman rencana merger dengan induk usahanya, PT Bank Rakyat Indonesia Tbk (BBRI). Langkah ini merupakan bagian dari strategi konsolidasi perbankan BUMN.",
+    },
+    {
+      title: "Unilever Indonesia Fokus Ekspansi Produk Ramah Lingkungan",
+      source: "Kompas",
+      time: "10 jam yang lalu",
+      tags: ["UNVR"],
+      snippet:
+        "PT Unilever Indonesia Tbk (UNVR) mengumumkan fokus strategis pada pengembangan dan ekspansi produk ramah lingkungan. Perseroan menargetkan 50% dari portofolio produknya menggunakan bahan yang dapat didaur ulang pada tahun 2025.",
+    },
+  ]
+
+  return (
+    <Card className="bg-white/80 backdrop-blur-sm border-secondary/20 overflow-hidden">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-accent"></div>
+      <CardHeader>
+        <CardTitle>Berita Terkini</CardTitle>
+        <CardDescription>Berita dan analisis terbaru dari pasar saham Indonesia</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {newsItems.slice(0, fullPage ? undefined : 3).map((news, index) => (
+            <div key={index} className="group">
+              <div className="space-y-2">
+                <h3 className="font-medium hover:text-primary cursor-pointer group-hover:text-primary transition-colors">
+                  {news.title}
+                </h3>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <span>{news.source}</span>
+                  <span className="mx-2">•</span>
+                  <span>{news.time}</span>
+                </div>
+                {fullPage && (
+                  <>
+                    <p className="text-sm text-muted-foreground">{news.snippet}</p>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {news.tags.map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant="outline"
+                          className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {!fullPage && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {news.tags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="outline"
+                        className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {index < (fullPage ? newsItems.length - 1 : 2) && <Separator className="mt-4 bg-secondary/30" />}
+            </div>
+          ))}
+        </div>
+        {!fullPage && (
+          <Button
+            variant="outline"
+            className="w-full mt-4 border-secondary/30 hover:bg-primary/10 hover:text-primary hover:border-primary/50"
+          >
+            Lihat Semua Berita
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
