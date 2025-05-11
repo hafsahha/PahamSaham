@@ -18,6 +18,14 @@ from selenium.webdriver.chrome.options import Options
 import os
 from webdriver_manager.chrome import ChromeDriverManager
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 
 def get_recent_links(category, days=1, max_pages=10):
     # Calculate the time threshold (24 hours ago from now)
@@ -44,7 +52,7 @@ def get_recent_links(category, days=1, max_pages=10):
             try:
                 # Open the page
                 url = f"http://www.iqplus.info/news/{category}/go-to-page,{page}.html"
-                # print(f"Processing page: {url}")
+                # logger.info(f"Processing page: {url}")
                 driver.get(url)
                 
                 # Wait for the news section to load
@@ -70,32 +78,32 @@ def get_recent_links(category, days=1, max_pages=10):
                             link = link_element.get_attribute("href")
                             if link:
                                 recent_links+=[link]
-                                # print(f"Found recent article: {link} ({date_text})")
+                                # logger.info(f"Found recent article: {link} ({date_text})")
                         else:
                             # Articles are sorted newest first, so we can stop after first old article
                             should_continue = False
-                            print(f"Found old article ({date_text}), stopping pagination")
+                            logger.info(f"Found old article ({date_text}), stopping pagination")
                             break
                             
                     except Exception as e:
-                        print(f"Error processing article on page {page}: {e}")
+                        logger.info(f"Error processing article on page {page}: {e}")
                         continue
                 
                 # If no recent articles on this page, stop pagination
                 if not page_has_recent_articles:
                     should_continue = False
-                    print("No recent articles found on this page, stopping")
+                    logger.info("No recent articles found on this page, stopping")
                     
                 page += 1
                 
             except Exception as e:
-                print(f"Error loading page {page}: {e}")
+                logger.info(f"Error loading page {page}: {e}")
                 should_continue = False
         
         driver.quit()
         return recent_links
     except Exception as e:
-        print(f"Error initializing Chrome: {str(e)}")
+        logger.info(f"Error initializing Chrome: {str(e)}")
         raise
 
 def scrape_article(url):
@@ -110,14 +118,14 @@ def scrape_article(url):
                     soup = BeautifulSoup(response.text, "html.parser")
                     content_element = soup.find("div", id="zoomthis")
                     if not content_element:
-                        print(f"⚠️ Content not found for URL: {url}")
+                        logger.info(f"⚠️ Content not found for URL: {url}")
                         return None
 
                     content = content_element.get_text(separator="\n").strip()
                     raw = [line for line in content.split("\n") if line.strip()]
 
                     if len(raw) < 3:
-                        print(f"⚠️ Incomplete data at {url}")
+                        logger.info(f"⚠️ Incomplete data at {url}")
                         return None
 
                     return {
@@ -128,14 +136,14 @@ def scrape_article(url):
                     }
 
                 else:
-                    print(f"❌ Request failed for {url} with status: {response.status_code}")
+                    logger.info(f"❌ Request failed for {url} with status: {response.status_code}")
                     return None
 
             except requests.exceptions.RequestException as e:
-                print(f"⚠️ Connection failed for {url} (Attempt {attempt + 1}/5): {e}")
+                logger.info(f"⚠️ Connection failed for {url} (Attempt {attempt + 1}/5): {e}")
                 time.sleep(random.uniform(2, 5))
 
-        print(f"❌ Failed to get data after 5 attempts: {url}")
+        logger.info(f"❌ Failed to get data after 5 attempts: {url}")
         return None
 def save_to_json(data, category, output_dir):
         # Create output directory if it doesn't exist
@@ -153,7 +161,7 @@ def save_to_json(data, category, output_dir):
                     if not isinstance(existing_data, list):
                         existing_data = []
             except (json.JSONDecodeError, OSError) as e:
-                print(f"⚠️ Error reading {json_file}: {e}")
+                logger.info(f"⚠️ Error reading {json_file}: {e}")
                 existing_data = []
         else:
             existing_data = []
@@ -165,9 +173,9 @@ def save_to_json(data, category, output_dir):
         try:
             with open(json_file, "w", encoding="utf-8") as file:
                 json.dump(existing_data, file, ensure_ascii=False, indent=4)
-            print(f"✅ Data saved to {json_file}")
+            logger.info(f"✅ Data saved to {json_file}")
         except OSError as e:
-            print(f"❌ Failed to save data to {json_file}: {e}")
+            logger.info(f"❌ Failed to save data to {json_file}: {e}")
 
 def main():
     # Set up argument parser
@@ -183,16 +191,16 @@ def main():
 
     # Get recent links
     links = get_recent_links(f"{args.category}_news", args.pages)
-    print(f"🔍 Found {len(links)} recent articles")
+    logger.info(f"🔍 Found {len(links)} recent articles")
 
     # Process each article
     for link in links:
-        print(f"\n📄 Processing article: {link}")
+        logger.info(f"\n📄 Processing article: {link}")
         article_data = scrape_article(link)
         if article_data:
             save_to_json(article_data, args.category, args.output)
     
-    print("✅ Scraping completed!")
+    logger.info("✅ Scraping completed!")
 
 if __name__ == "__main__":
     main()

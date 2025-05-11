@@ -125,6 +125,7 @@ def download_idx_reports():
                     logger.info(f"Standard click performed on: {description}")
                     
                     time.sleep(sleep)  # Wait after click
+                    
 
                     return True
                 

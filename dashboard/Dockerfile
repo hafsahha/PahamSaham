@@ -40,7 +40,7 @@ COPY --from=builder /app/tailwind.config.ts ./
 RUN ls -la .next || echo "Folder .next tidak ada di tahap run"
 
 # Install production dependencies
-RUN npm ci --production --legacy-peer-deps --verbose
+RUN npm ci --legacy-peer-deps --verbose
 
 EXPOSE 3000
 
