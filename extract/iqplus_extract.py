@@ -145,6 +145,7 @@ def scrape_article(url):
 
         logger.info(f"❌ Failed to get data after 5 attempts: {url}")
         return None
+
 def save_to_json(data, category, output_dir):
         # Create output directory if it doesn't exist
         os.makedirs(output_dir, exist_ok=True)
