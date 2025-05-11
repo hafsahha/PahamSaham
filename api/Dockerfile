@@ -22,4 +22,4 @@ COPY . .
 EXPOSE 5000
 
 # Jalankan aplikasi
-CMD ["python", "api_aggregate.py"]
+CMD ["python", "backend_api.py"]
