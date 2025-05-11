@@ -1,184 +1,210 @@
-"""
-Extract module for yfinance data
-This module is responsible for fetching daily stock data from yfinance
-"""
-
-import yfinance as yf
-import pandas as pd
-import time
-from datetime import datetime
-import json
 import os
-import logging
+import json
+import requests
+import time
+import random
+from datetime import datetime, timedelta
+from bs4 import BeautifulSoup
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium import webdriver
+import argparse
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+import os
+from webdriver_manager.chrome import ChromeDriverManager
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
-# List of stocks to fetch
-STOCKS = [
-    # BANKING SECTOR
-    "BBRI.JK", "BMRI.JK", "BBCA.JK", "BBNI.JK", "BJBR.JK", "BJTM.JK", "AGRO.JK", "BBKP.JK", "BDMN.JK", 
-    "NISP.JK", "PNBN.JK", "BCIC.JK", "MAYA.JK", "ARTO.JK", "BTPS.JK", "AMAR.JK", "NOBU.JK", "BINA.JK",
-    "BSIM.JK", "BNGA.JK", "BGTG.JK", "BNLI.JK", "BABP.JK", "BBYB.JK", "BEKS.JK", "BMAS.JK", "BOSS.JK",
-
-    # ENERGY SECTOR
-    "ADRO.JK", "ITMG.JK", "PTBA.JK", "MEDC.JK", "PGAS.JK", "ELSA.JK", "AKRA.JK", "HRUM.JK", "INDY.JK",
-    "MBAP.JK", "BIPI.JK", "DOID.JK", "ENRG.JK", "RAJA.JK", "GEMS.JK", "TPIA.JK", "BRPT.JK", "ESSA.JK",
-    "PSAB.JK", "SMMT.JK", "BREN.JK", "TOBA.JK", "CNKO.JK", "MARI.JK", "BUMI.JK", "SUGI.JK", "DWGL.JK",
-
-    # CONSUMER GOODS
-    "UNVR.JK", "ICBP.JK", "INDF.JK", "MYOR.JK", "SIDO.JK", "KAEF.JK", "PEHA.JK", "KLBF.JK", "GOOD.JK",
-    "DMND.JK", "KINO.JK", "ALTO.JK", "AISA.JK", "HOKI.JK", "CLEO.JK", "ULTJ.JK", "ADES.JK", "ROTI.JK",
-    "FOOD.JK", "CMRY.JK", "SAPX.JK", "STTP.JK", "MRAT.JK", "FITT.JK", "NAYZ.JK", "TSPC.JK", "CBMF.JK",
-
-    # INFRASTRUCTURE & TELECOMMUNICATION
-    "TLKM.JK", "EXCL.JK", "ISAT.JK", "FREN.JK", "TOWR.JK", "SUPR.JK", "JSMR.JK", "CMNP.JK", "WIKA.JK",
-    "PTPP.JK", "ADHI.JK", "WSKT.JK", "WTON.JK", "KRAS.JK", "SMGR.JK", "INTP.JK", "LPKR.JK", "PWON.JK",
-    "NRCA.JK", "TOTL.JK", "ACST.JK", "MTLA.JK", "PPRO.JK", "KIJA.JK", "JRPT.JK", "CTRA.JK", "DMAS.JK",
-
-    # PROPERTY & REAL ESTATE
-    "BSDE.JK", "CTRA.JK", "SMRA.JK", "ASRI.JK", "DMAS.JK", "COWL.JK", "OMRE.JK", "KIJA.JK", "MTLA.JK",
-    "JRPT.JK", "PPRO.JK", "NIRO.JK", "BKSL.JK", "URBN.JK", "PLIN.JK", "MKPI.JK", "PWON.JK", "LMAS.JK",
-    "DILD.JK", "ELTY.JK", "RDTX.JK", "TARA.JK", "LPCK.JK", "MDLN.JK", "SIPD.JK", "JGLE.JK",
-
-    # TRANSPORTATION & LOGISTICS
-    "GIAA.JK", "ASSA.JK", "SMDR.JK", "TMAS.JK", "HITS.JK", "SAFE.JK", "JSMR.JK", "MCOL.JK", "WEHA.JK",
-    "BIRD.JK", "SAPX.JK", "BLTA.JK", "MBTO.JK", "IPCC.JK", "DEPO.JK", "NELY.JK", "CMPP.JK", "JAYA.JK",
-    "ADES.JK", "TRUK.JK", "WEHA.JK", "LION.JK", "TAXI.JK", "JAYA.JK",
-
-    # METAL & MINING
-    "ANTM.JK", "INCO.JK", "MDKA.JK", "PSAB.JK", "TINS.JK", "HRTA.JK", "ZINC.JK", "DKFT.JK", "BOSS.JK",
-    "KKGI.JK", "BIPI.JK", "TOBA.JK", "GEMS.JK", "DOID.JK", "MBAP.JK", "CITA.JK", "NICL.JK",
-    "NIKL.JK", "SMRU.JK", "PTRO.JK", "SPTO.JK", "MAMI.JK", "LSIP.JK", "MGRO.JK", "TAPG.JK", "STAA.JK",
-
-    # RETAIL & DISTRIBUTION
-    "ACES.JK", "MAPI.JK", "RALS.JK", "LPPF.JK", "MPPA.JK", "AMRT.JK", "ERAA.JK", "CSAP.JK", "PRDA.JK",
-    "TELE.JK", "KIOS.JK", "DIVA.JK", "DIGI.JK", "NFCX.JK", "GLOB.JK", "MCAS.JK", "TFAS.JK", "MDKA.JK",
-    "DNET.JK", "PDES.JK", "MIDI.JK", "MAPA.JK", "OPMS.JK", "BATA.JK", "UNVR.JK", "INAF.JK",
-
-    # FINTECH & TECHNOLOGY
-    "GOTO.JK", "BUKA.JK", "DCII.JK", "EDGE.JK", "MTDL.JK", "SKYB.JK", "ALDO.JK", "YELO.JK", "MPXL.JK",
-    "MCAS.JK", "BALI.JK", "TFAS.JK", "DIVA.JK", "NFCX.JK", "WIFI.JK", "DMMX.JK", "BIRD.JK", "DEPO.JK",
-    "SLIS.JK", "TRIO.JK", "TECH.JK", "CLAY.JK", "LUCY.JK", "AGII.JK", "AXIO.JK",
-
-    # MANUFACTURING
-    "SMSM.JK", "AUTO.JK", "ASII.JK", "GJTL.JK", "IMAS.JK", "SPMA.JK", "INDS.JK", "PRAS.JK", "SSTM.JK",
-    "INDR.JK", "ICBP.JK", "INDF.JK", "PICO.JK", "LTLS.JK", "INTA.JK", "MASA.JK", "DUTI.JK", "BTON.JK",
-    "DKFT.JK", "TRST.JK", "STTP.JK", "ALMI.JK", "CASS.JK", "AGRO.JK", "BTON.JK", "GGRP.JK", "BRNA.JK",
-]
-
-# Output file path (can be configured via environment variable)
-OUTPUT_FILE_PATH = os.environ.get('YFINANCE_OUTPUT_PATH')
-
-def extract_daily_data():
-    """
-    Extract stock data from yfinance for the last day only
-    Returns the path to the saved JSON file
-    """
-    start_time_total = time.time()
+def get_recent_links(category, days=1, max_pages=10):
+    # Calculate the time threshold (24 hours ago from now)
+    time_threshold = datetime.now() - timedelta(hours=24*days)
     
-    # Dictionary to store stock data
-    stock_data = {}
-    success_list = []
-    failed_list = {}
-    time_per_stock = {}
+    # Set up Chrome options (e.g., for headless mode)
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    # Explicit paths
+    # chrome_options.binary_location = "/usr/bin/google-chrome"
+    # service = Service(executable_path="/usr/bin/chromedriver")
     
-    logger.info(f"Starting data extraction process at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    logger.info(f"Total stocks to process: {len(STOCKS)}")
-    logger.info("-" * 50)
-    
-    for idx, stock in enumerate(STOCKS, 1):
-        try:
-            # Record start time for each stock
-            start_time_stock = time.time()
-            
-            logger.info(f"[{idx}/{len(STOCKS)}] Fetching data for {stock}...")
-            
-            ticker = yf.Ticker(stock)
-            info = ticker.info
-            
-            # Get only the last day's data instead of 5 years
-            history = ticker.history(period="1d")
-            
-            # Check if history is empty
-            if history.empty:
-                logger.warning(f"No data available for {stock} today, skipping...")
-                failed_list[stock] = "No data available"
-                continue
-            
-            # Convert DataFrame to JSON-friendly format
-            history.reset_index(inplace=True)
-            history["Date"] = history["Date"].astype(str)  # Convert Timestamp to String
-            
-            # Create document for MongoDB
-            stock_doc = {
-                "_id": stock,  # Use stock code as unique ID
-                "symbol": stock,
-                "fetch_date": datetime.now().strftime('%Y-%m-%d'),
-                "info": info,
-                "history": history.to_dict(orient="records")  # List format
-            }
-            stock_data[stock] = stock_doc
-            
-            # Calculate time taken for this stock
-            elapsed_time = time.time() - start_time_stock
-            time_per_stock[stock] = elapsed_time
-            
-            success_list.append(stock)
-            logger.info(f"Data for {stock} fetched successfully in {elapsed_time:.2f} seconds")
-            
-        except Exception as e:
-            elapsed_time = time.time() - start_time_stock
-            failed_list[stock] = str(e)
-            logger.error(f"Failed to fetch data for {stock} ({elapsed_time:.2f} seconds) - {str(e)}")
-    
-    # Calculate total time
-    total_elapsed_time = time.time() - start_time_total
-    
-    # Print results summary
-    logger.info("\n" + "=" * 50)
-    logger.info(f"EXTRACTION PROCESS SUMMARY")
-    logger.info("=" * 50)
-    logger.info(f"Total execution time: {total_elapsed_time:.2f} seconds ({total_elapsed_time/60:.2f} minutes)")
-    logger.info(f"Number of stocks successfully fetched: {len(success_list)} out of {len(STOCKS)}")
-    logger.info(f"Number of stocks failed: {len(failed_list)}")
-    
-    # Statistics on time
-    if success_list:
-        avg_time = sum(time_per_stock.values()) / len(success_list)
-        max_time = max(time_per_stock.values()) if time_per_stock else 0
-        min_time = min(time_per_stock.values()) if time_per_stock else 0
-        slowest_stock = max(time_per_stock, key=time_per_stock.get) if time_per_stock else 'N/A'
-        fastest_stock = min(time_per_stock, key=time_per_stock.get) if time_per_stock else 'N/A'
-        
-        logger.info("\nTIME STATISTICS:")
-        logger.info(f"- Average time per stock: {avg_time:.2f} seconds")
-        logger.info(f"- Fastest stock: {fastest_stock} ({min_time:.2f} seconds)")
-        logger.info(f"- Slowest stock: {slowest_stock} ({max_time:.2f} seconds)")
-    
-    if failed_list:
-        logger.info("\nFailed stocks:")
-        for stock, error in failed_list.items():
-            logger.info(f"- {stock}: {error}")
-    
-    # Save to file
     try:
-        # Convert stock_data dictionary to list format for MongoDB compatibility
-        stock_list = list(stock_data.values())
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+
+        recent_links = []
+        page = 0
+        should_continue = True
         
-        with open(OUTPUT_FILE_PATH, 'w', encoding='utf-8') as json_file:
-            json.dump(stock_list, json_file, ensure_ascii=False, indent=4)
-        logger.info(f"\nData saved to {OUTPUT_FILE_PATH}")
+        while should_continue and page < max_pages:
+            try:
+                # Open the page
+                url = f"http://www.iqplus.info/news/{category}/go-to-page,{page}.html"
+                # print(f"Processing page: {url}")
+                driver.get(url)
+                
+                # Wait for the news section to load
+                news_section = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CLASS_NAME, "news")))
+                
+                # Process articles on this page
+                articles = news_section.find_elements(By.TAG_NAME, "li")
+                page_has_recent_articles = False
+                
+                for article in articles:
+                    try:
+                        # Extract the date text (format: DD/MM/YY - HH:MM)
+                        date_element = article.find_element(By.TAG_NAME, "b")
+                        date_text = date_element.text.strip()
+                        
+                        # Parse the date (day/month/year - hour:minute)
+                        article_date = datetime.strptime(date_text, "%d/%m/%y - %H:%M")
+                        
+                        if article_date >= time_threshold:
+                            page_has_recent_articles = True
+                            link_element = article.find_element(By.TAG_NAME, "a")
+                            link = link_element.get_attribute("href")
+                            if link:
+                                recent_links+=[link]
+                                # print(f"Found recent article: {link} ({date_text})")
+                        else:
+                            # Articles are sorted newest first, so we can stop after first old article
+                            should_continue = False
+                            print(f"Found old article ({date_text}), stopping pagination")
+                            break
+                            
+                    except Exception as e:
+                        print(f"Error processing article on page {page}: {e}")
+                        continue
+                
+                # If no recent articles on this page, stop pagination
+                if not page_has_recent_articles:
+                    should_continue = False
+                    print("No recent articles found on this page, stopping")
+                    
+                page += 1
+                
+            except Exception as e:
+                print(f"Error loading page {page}: {e}")
+                should_continue = False
+        
+        driver.quit()
+        return recent_links
     except Exception as e:
-        logger.error(f"Failed to save data to file: {str(e)}")
+        print(f"Error initializing Chrome: {str(e)}")
         raise
+
+def scrape_article(url):
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+
+        for attempt in range(5):
+            try:
+                response = requests.get(url, headers=headers, timeout=10)
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.text, "html.parser")
+                    content_element = soup.find("div", id="zoomthis")
+                    if not content_element:
+                        print(f"⚠️ Content not found for URL: {url}")
+                        return None
+
+                    content = content_element.get_text(separator="\n").strip()
+                    raw = [line for line in content.split("\n") if line.strip()]
+
+                    if len(raw) < 3:
+                        print(f"⚠️ Incomplete data at {url}")
+                        return None
+
+                    return {
+                        "date": raw[0],
+                        "title": raw[1],
+                        "text": ' '.join(raw[2:]).strip(),
+                        "url": url
+                    }
+
+                else:
+                    print(f"❌ Request failed for {url} with status: {response.status_code}")
+                    return None
+
+            except requests.exceptions.RequestException as e:
+                print(f"⚠️ Connection failed for {url} (Attempt {attempt + 1}/5): {e}")
+                time.sleep(random.uniform(2, 5))
+
+        print(f"❌ Failed to get data after 5 attempts: {url}")
+        return None
+def save_to_json(data, category, output_dir):
+        # Create output directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Create filename with current date
+        today = datetime.now().strftime("%Y-%m-%d")
+        json_file = os.path.join(output_dir, f"iqplus_{category}_{today}.json")
+        
+        # Load existing data or create new list
+        if os.path.exists(json_file):
+            try:
+                with open(json_file, "r", encoding="utf-8") as file:
+                    existing_data = json.load(file)
+                    if not isinstance(existing_data, list):
+                        existing_data = []
+            except (json.JSONDecodeError, OSError) as e:
+                print(f"⚠️ Error reading {json_file}: {e}")
+                existing_data = []
+        else:
+            existing_data = []
+        
+        # Add new data
+        existing_data.append(data)
+        
+        # Save back to file
+        try:
+            with open(json_file, "w", encoding="utf-8") as file:
+                json.dump(existing_data, file, ensure_ascii=False, indent=4)
+            print(f"✅ Data saved to {json_file}")
+        except OSError as e:
+            print(f"❌ Failed to save data to {json_file}: {e}")
+
+def main():
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description='Scrape IQ Plus news articles')
+    parser.add_argument('--category', type=str, default='market',
+                       help='News category to scrape (default: market)')
+    parser.add_argument('--output', type=str, default='output/',
+                       help='Output directory (default: output/)')
+    parser.add_argument('--pages', type=int, default=1,
+                       help='Number of pages to scrape (default: 1)')
     
-    return OUTPUT_FILE_PATH
+    args = parser.parse_args()
+
+    # Get recent links
+    links = get_recent_links(f"{args.category}_news", args.pages)
+    print(f"🔍 Found {len(links)} recent articles")
+
+    # Process each article
+    for link in links:
+        print(f"\n📄 Processing article: {link}")
+        article_data = scrape_article(link)
+        if article_data:
+            save_to_json(article_data, args.category, args.output)
+    
+    print("✅ Scraping completed!")
 
 if __name__ == "__main__":
-    # Can be run as a standalone script for testing
-    extract_daily_data()
+    main()
+
+'''
+With default values (market category):
+python script.py
+
+With custom category:
+python script.py --category stock
+
+With all custom parameters:
+python script.py --category market --output output/ --pages 3
+
+'''

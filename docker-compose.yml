@@ -151,18 +151,20 @@ services:
     restart: on-failure
     command: ["python", "idx_extract.py"]
 
-  # extract_iqplus:
-  #   profiles: ["build"]
-  #   build:
-  #     context: .  
-  #     dockerfile: extract/Dockerfile
-  #   image: extraction  # Menggunakan image yang sama dengan extract_yfinance dan extract_idx
-  #   container_name: extract_iqplus
-  #   volumes:
-  #     - ./output:/app/output
-  #   environment:
-  #     IQPLUS_OUTPUT_PATH: /app/output/iqplus_output.json
-  #   command: ["python", "iqplus_extract.py"]  # Menjalankan iqplus_extract.py
+  extract_iqplus:
+    profiles: ["build"]
+    build:
+      context: .  
+      dockerfile: extract/Dockerfile
+    image: extraction  # Menggunakan image yang sama dengan extract_yfinance dan extract_idx
+    container_name: extract_iqplus
+    volumes:
+      - ./output:/app/output
+    environment:
+      IQPLUS_OUTPUT_PATH: /app/output/iqplus_output.json
+    # command: ["python", "iqplus_extract.py"]  # Menjalankan iqplus_extract.py
+      command: python idx_extract.py --category market --output output/ --pages 2
+
 
   transform_idx:
     build:
