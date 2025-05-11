@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
 
 interface StockNewsProps {
   fullPage?: boolean
@@ -10,6 +11,7 @@ interface StockNewsProps {
 export default function StockNews({ fullPage = false }: StockNewsProps) {
   const newsItems = [
     {
+      id: "1",
       title: "Bank Indonesia Pertahankan Suku Bunga Acuan di Level 5,75%",
       source: "CNBC Indonesia",
       time: "2 jam yang lalu",
@@ -18,6 +20,7 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
         "Bank Indonesia (BI) memutuskan untuk mempertahankan suku bunga acuan atau BI Rate di level 5,75% dalam Rapat Dewan Gubernur (RDG) bulanan. Keputusan ini sejalan dengan upaya menjaga stabilitas nilai tukar rupiah dan mengendalikan inflasi.",
     },
     {
+      id: "2",
       title: "Telkom Indonesia Luncurkan Layanan 5G di 10 Kota Besar",
       source: "Investor Daily",
       time: "4 jam yang lalu",
@@ -26,6 +29,7 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
         "PT Telkom Indonesia Tbk (TLKM) resmi meluncurkan layanan 5G di 10 kota besar di Indonesia. Langkah ini merupakan bagian dari strategi perseroan untuk memperkuat posisinya di industri telekomunikasi dan digital.",
     },
     {
+      id: "3",
       title: "Astra International Catat Pertumbuhan Laba 15% di Kuartal II-2023",
       source: "Bisnis.com",
       time: "6 jam yang lalu",
@@ -34,6 +38,7 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
         "PT Astra International Tbk (ASII) mencatatkan pertumbuhan laba bersih sebesar 15% secara year-on-year (yoy) pada kuartal II-2023. Kinerja positif ini didorong oleh kontribusi dari segmen otomotif dan jasa keuangan.",
     },
     {
+      id: "4",
       title: "BRI Agro Merger dengan BRI, Saham AGRO Melesat",
       source: "Kontan",
       time: "8 jam yang lalu",
@@ -42,6 +47,7 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
         "Saham PT Bank Rakyat Indonesia Agroniaga Tbk (AGRO) melesat setelah pengumuman rencana merger dengan induk usahanya, PT Bank Rakyat Indonesia Tbk (BBRI). Langkah ini merupakan bagian dari strategi konsolidasi perbankan BUMN.",
     },
     {
+      id: "5",
       title: "Unilever Indonesia Fokus Ekspansi Produk Ramah Lingkungan",
       source: "Kompas",
       time: "10 jam yang lalu",
@@ -63,9 +69,11 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
           {newsItems.slice(0, fullPage ? undefined : 3).map((news, index) => (
             <div key={index} className="group">
               <div className="space-y-2">
-                <h3 className="font-medium hover:text-primary cursor-pointer group-hover:text-primary transition-colors dark:text-foreground">
-                  {news.title}
-                </h3>
+                <Link href={`/berita/${news.id}`} className="block">
+                  <h3 className="font-medium hover:text-primary cursor-pointer group-hover:text-primary transition-colors dark:text-foreground">
+                    {news.title}
+                  </h3>
+                </Link>
                 <div className="flex items-center text-sm text-muted-foreground">
                   <span>{news.source}</span>
                   <span className="mx-2">•</span>
@@ -111,8 +119,9 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
           <Button
             variant="outline"
             className="w-full mt-4 border-secondary/30 dark:border-border hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 dark:hover:text-primary hover:border-primary/50"
+            asChild
           >
-            Lihat Semua Berita
+            <Link href="/berita">Lihat Semua Berita</Link>
           </Button>
         )}
       </CardContent>

@@ -18,10 +18,11 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/next.config.mjs ./
 COPY --from=builder /app/tailwind.config.ts ./
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/app ./app
 
 ENV PATH="./node_modules/.bin:$PATH"
 
 RUN ls -la node_modules/.bin && node_modules/.bin/next --version
 
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["npm", "run", "dev"]
