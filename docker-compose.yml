@@ -202,6 +202,19 @@ services:
     environment:
       MONGO_COLLECTION: "idx_data_testing"
       INPUT_PATH: /app/output/idx_output.json
+      
+  load_iqplus:
+    profiles: ["build"]
+    build:
+      context: ./load
+      dockerfile: Dockerfile
+    image: loader
+    container_name: load_iqplus
+    volumes:
+      - ./output:/app/output
+    environment:
+      MONGO_COLLECTION: "iqplus_data_testing"
+      INPUT_PATH: /app/output/iqplus_output.json
 
 volumes:
   postgres-db:   
