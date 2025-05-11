@@ -85,7 +85,7 @@ def summarize_news(text):
     start_time = time.time()
     try:
         response = client.chat(
-            model="tinyllama",
+            model="phi3",
             messages=[
                 {"role": "system", "content": "Tidak usah menggunakan kalimat pembuka, berikan ringkasan bahasa Indonesia berisi sekitar 50 kata dari artikel ini:"},
                 {"role": "user", "content": text}
@@ -106,16 +106,16 @@ def analyze_sentiment(text):
     start_time = time.time()
     try:
         response = client.chat(
-            model="tinyllama",
+            model="phi3",
             messages=[
-                {"role": "system", "content": "Hanya jawab dengan satu kata: positif/netral/negatif"},
+                {"role": "system", "content": "analisis sentimen artikel ini, Hanya jawab dengan satu kata!: 'positif'/'netral'/'negatif'"},
                 {"role": "user", "content": text}
             ],
             options={"temperature": 0}
         )
         sentiment = response['message']['content'].strip().lower()
         logger.info(f"Finished sentiment analysis in {time.time() - start_time:.2f} seconds")
-        if sentiment not in ["positif", "netral", "negatif"]:
+        if sentiment not in ["positif", "netral", "negatif", "positive", "neutral", "negative"]:
             logger.warning(f"⚠️ Invalid sentiment received: {sentiment}. Defaulting to netral.")
             return "netral"
         return sentiment
