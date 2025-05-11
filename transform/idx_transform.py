@@ -82,7 +82,7 @@ def extract_financials(xbrl_dict):
     return result
 
 # Path to the extracted folder where the XBRL files are stored
-extracted_folder = "/app/output/idx_extracted"  # Folder where ZIP files were extracted to
+extracted_folder = os.environ.get('INPUT_PATH')
 
 # Get all files from the extracted folder
 xbrl_files = []
@@ -117,7 +117,7 @@ def process_xbrl_file(file_path):
 processed_data = rdd.map(process_xbrl_file).filter(lambda x: x is not None).collect()
 
 # Save the results to a JSON file
-json_output_file = "/app/output/idx_output.json"
+json_output_file = os.environ.get('OUTPUT_PATH')
 with open(json_output_file, 'w', encoding='utf-8') as json_file:
     json.dump(processed_data, json_file, indent=4, ensure_ascii=False)
 
@@ -143,7 +143,6 @@ def clear_folder(folder_path):
     except Exception as e:
         print(f"Error clearing folder {folder_path}: {e}")
 
-# Example usage: clear the idx_zip and idx_extracted folders after processing
 clear_folder("/app/output/idx_zip")
 clear_folder("/app/output/idx_extracted")
 

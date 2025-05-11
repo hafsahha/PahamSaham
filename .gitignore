@@ -2,3 +2,5 @@
 /airflow/dags/__pycache__
 
 /output
+build-log
+compose-log

@@ -107,14 +107,10 @@ def download_idx_reports():
                 try:            
                     # Log the page source for debugging
                     logger.info(f"Looking for element: {xpath}")
-                    
-                    # Wait for element to be present
-                    element = wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
-                    
+
                     # Scroll to element
                     element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
                     driver.execute_script("arguments[0].scrollIntoView({block: 'center', behavior: 'smooth'});", element)
-                    time.sleep(sleep)
                     
                     # Verify element is really clickable
                     if not element.is_displayed() or not element.is_enabled():
@@ -126,7 +122,6 @@ def download_idx_reports():
                     
                     time.sleep(sleep)  # Wait after click
                     
-
                     return True
                 
                 except Exception as e:
@@ -162,7 +157,7 @@ def download_idx_reports():
                                 logger.info(f"Downloading: {file_url}")
                                 driver.get(file_url)
                                 processed_files += 1
-                                time.sleep(2)  # Brief pause between downloads
+                                time.sleep(1)  # Brief pause between downloads
                                 
                             except Exception as e:
                                 logger.error(f"Failed to download file: {str(e)}")
@@ -172,7 +167,6 @@ def download_idx_reports():
 
                     # Pagination handling
                     try:
-                        element = wait.until(EC.presence_of_element_located((By.XPATH, "//button[contains(@class, 'next') and not(@disabled)]")))
                         element = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'next') and not(@disabled)]")))
                         if not element.is_displayed() or not element.is_enabled():
                             raise Exception("Element is not interactable")

@@ -323,7 +323,7 @@ export default function Dashboard() {
               />
             </div>
 
-            <h3 className="mb-2 text-sm font-medium text-primary">Watchlist</h3>
+            <h3 className="mb-2 text-sm font-medium text-primary dark:text-blue/60">Watchlist</h3>
             <div className="grid gap-1 flex-1 overflow-y-auto max-h-30">
               <div className="grid gap-1">
                 {filteredEmiten.map((emiten) => (
@@ -526,7 +526,7 @@ export default function Dashboard() {
                           <div className="flex justify-between">
                             <Button
                               variant="outline"
-                              className="border-secondary/30 bg-white hover:bg-primary/10 hover:text-primary hover:border-primary/50"
+                              className="border-secondary/30 bg-white hover:bg-primary/10 hover:text-primary hover:border-primary/50 dark:hover:border-secondary/30 dark:hover:bg-primary/30 dark:hover:text-blue-100 dark:bg-card dark:text-blue-100 dark:border-card/50"
                             >
                               Beli
                             </Button>
