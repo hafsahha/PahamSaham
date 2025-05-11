@@ -5,6 +5,9 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, to_date, date_format, avg
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType
 import os
+import json
+from bson import json_util
+from datetime import datetime, timedelta
 
 # === Konfigurasi ===
 app = Flask(__name__)
@@ -12,6 +15,7 @@ CORS(app)
 client = MongoClient("mongodb+srv://coffeelatte:secretdata3@luna.sryzase.mongodb.net/")
 db = client["bigdata_saham"]
 collection = db["yfinance_data"]
+iqplus_collection = db["iqplus_data"]
 # os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
 
 spark = SparkSession.builder.appName("SahamApp").config("spark.ui.port", "4050").getOrCreate()
@@ -19,6 +23,10 @@ spark = SparkSession.builder.appName("SahamApp").config("spark.ui.port", "4050")
 # === Helper ===
 def safe_float(v): return float(v) if v not in [None, ""] else 0.0
 def safe_int(v): return int(v) if v not in [None, ""] else 0
+
+
+def parse_json(data):
+    return json.loads(json_util.dumps(data))
 
 def load_data(emiten):
     doc = collection.find_one({ "info.symbol": { "$regex": f"^{emiten}$", "$options": "i" } })
@@ -96,11 +104,63 @@ def get_idx_financials():
         return jsonify({"error": "Parameter 'entity_code' wajib diisi"}), 400
 
     data = db["idx_data"].find_one({"EntityCode": entity_code})
-    if not data:
+    if not data:    
         return jsonify({"error": f"Tidak ditemukan data untuk '{entity_code}'"}), 404
 
     data.pop("_id", None)
     return jsonify(data)
+
+# === Endpoint: Data Berita IQPlus ===
+@app.route('/api/iqplus/')
+def get_all_news():
+    """Endpoint untuk semua berita IQ Plus"""
+    try:
+        news = list(iqplus_collection.find({}))
+        return jsonify({
+            'status': 'success',
+            'data': parse_json(news),
+            'count': len(news)
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/iqplus/recent')
+def get_recent_news():
+    """Endpoint untuk berita terbaru (default: 24 jam terakhir)"""
+    try:
+        hours = int(request.args.get('hours', 24))
+        time_threshold = datetime.now() - timedelta(hours=hours)
+        
+        recent_news = list(iqplus_collection.find({
+            "date": {
+                "$gte": time_threshold.strftime("%d/%m/%Y %H:%M")
+            }
+        }))
+        
+        return jsonify({
+            'status': 'success',
+            'data': parse_json(recent_news),
+            'count': len(recent_news)
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/iqplus/emiten/<emiten_code>')
+def get_news_by_emiten(emiten_code):
+    """Endpoint untuk berita berdasarkan kode emiten"""
+    try:
+        emiten_news = list(iqplus_collection.find({
+            "emiten": emiten_code.upper()
+        }))
+        
+        return jsonify({
+            'status': 'success',
+            'data': parse_json(emiten_news),
+            'count': len(emiten_news)
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000)
