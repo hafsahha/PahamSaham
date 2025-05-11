@@ -53,18 +53,6 @@ def extract_financials(xbrl_dict):
 
     if isinstance(context_data, list):
         for context in context_data:
-            if 'entity' in context and 'identifier' in context['entity']:
-                result["EntityCode"] = context['entity']['identifier'].get('#text', None)
-            
-            # Handle EntityName using the idx-dei:EntityName from the context
-            if 'entity' in context and 'identifier' in context['entity']:
-                # Check if idx-dei:EntityName exists and retrieve its value
-                entity_name = context['entity'].get('idx-dei:EntityName', None)
-                if isinstance(entity_name, dict) and '#text' in entity_name:
-                    result["EntityName"] = entity_name['#text']
-                elif isinstance(entity_name, str):
-                    result["EntityName"] = entity_name
-
             if 'period' in context:
                 # First check for the "instant" key in the period for "instant" values
                 if 'instant' in context['period']:
@@ -83,6 +71,13 @@ def extract_financials(xbrl_dict):
         # If idx-dei:EntityName is found, extract the name
         if isinstance(entity_name_outside_context, dict) and '#text' in entity_name_outside_context:
             result["EntityName"] = entity_name_outside_context['#text']
+
+    # New code: Extracting EntityCode directly from idx-dei:EntityCode
+    entity_code_outside_context = xbrl_dict.get('xbrl', {}).get('idx-dei:EntityCode', None)
+    if entity_code_outside_context:
+        # If idx-dei:EntityCode is found, extract the code
+        if isinstance(entity_code_outside_context, dict) and '#text' in entity_code_outside_context:
+            result["EntityCode"] = entity_code_outside_context['#text']
 
     return result
 
