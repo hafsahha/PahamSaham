@@ -2,11 +2,17 @@ import json
 import os
 import requests
 from datetime import datetime
-from openai import OpenAI
+# import openai
 import re
 
 # Initialize LLM client
-clientAI = OpenAI(base_url="http://192.168.0.203:1234/v1", api_key="gemma-3-4b-it")
+# clientAI = OpenAI(base_url="http://192.168.0.203:1234/v1", api_key="gemma-3-4b-it")
+
+from openai import OpenAI
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key="YOURSECRETKEY"
+)
 
 # Cache for emiten data
 emiten_cache = {}
@@ -63,9 +69,8 @@ def extract_ticker(title):
     return potential_ticker
 
 def summarize_news(text):
-    
-    response = clientAI.chat.completions.create(
-        model="model-identifier",
+    response = client.chat.completions.create(
+        model="mistralai/mistral-7b-instruct",  # Choose any supported model
         messages=[
             {"role": "system", "content": "Tidak usah menggunakan kalimat pembuka, berikan ringkasan bahasa indonesia berisi sekitar 50 kata dari artikel ini:"},
             {"role": "user", "content": text}
@@ -78,19 +83,22 @@ def summarize_news(text):
     fin [-1]=fin [-1].replace(" (50 kata)", "")
     print(fin[-1])
     return fin[-1].strip()
+    # return "placeholder"
         
 
 def analyze_sentiment(text):
     """Analyze sentiment with strict output control"""
-    response = clientAI.chat.completions.create(
-        model="model-identifier",
+    
+    response = client.chat.completions.create(
+        model="mistralai/mistral-7b-instruct",  # Choose any supported model
         messages=[
             {"role": "system", "content": "Hanya jawab dengan satu kata: positif/netral/negatif"},
             {"role": "user", "content": text}
         ],
-        # max_tokens=10,
-        # temperature=0.3
+        max_tokens=5,
+        temperature=0
     )
+
     res = response.choices[0].message.content
     
     fin = res.split("</think>")#[-1].strip()
@@ -134,12 +142,11 @@ def save_article(output_path, article_data):
         return False
 
 def get_emiten_name(url):
-    print("Fetching emiten name from URL...")
+    # print("Fetching emiten name from URL...")
     tmp = url.split("/")
     tmp = tmp[-1].split("-")
-    print(tmp)
-    print(tmp[0].upper())
-
+    # print(tmp)
+    # print(tmp[0].upper())
     return tmp[0].upper()
 
 
