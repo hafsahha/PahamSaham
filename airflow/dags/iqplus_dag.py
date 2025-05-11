@@ -80,7 +80,7 @@ with DAG(
         docker_url="unix://var/run/docker.sock",
         network_mode="saham_net",
         mount_tmp_dir=False,
-        mounts=[
+        mounts = [
             Mount(source=host_output_path, target='/app/output', type='bind')
         ],
         command="python iqplus_transform.py --category market",

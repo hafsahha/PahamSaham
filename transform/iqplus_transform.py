@@ -185,9 +185,16 @@ def process_article(article, category, output_path):
     
     if 'text' in article and article['text'].strip():
         logger.info("Generating summary...")
-        processed_data['summary'] = summarize_news(article['text'])
+        # processed_data['summary'] = summarize_news(article['text'])
+        # logger.info("Generating sentiment...")
+        # processed_data['sentimen'] = analyze_sentiment(article['text'])
+        
+        # for test
+
+        processed_data['summary'] = "testttttt"
         logger.info("Generating sentiment...")
-        processed_data['sentimen'] = analyze_sentiment(article['text'])
+        processed_data['sentimen'] = "cihuy"
+
         logger.info("Summary and sentiment generated.")
     
     logger.info("Saving article to output...")
@@ -231,7 +238,7 @@ def main(category, date=None):
     input_dir = os.getenv("INPUT_PATH")
     
     input_path = os.path.join(input_dir, input_file)
-    output_path = os.path.join("OUTPUT_PATH")
+    output_path = os.getenv("OUTPUT_PATH")
     
     if os.path.exists(input_path):
         logger.info(f"🔧 Processing {input_file}...")
