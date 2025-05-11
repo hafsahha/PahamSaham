@@ -57,13 +57,13 @@ async function fetchPriceData(emiten: string, period: string): Promise<PriceData
 const CustomTooltip = ({ active, payload, label, selectedStocks }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-2 border border-gray-200 rounded shadow-lg">
-        <p className="text-xs text-gray-600">Tanggal: {label}</p>
+      <div className="bg-card dark:bg-card p-2 border border-border dark:border-border rounded shadow-lg">
+        <p className="text-xs text-muted-foreground dark:text-muted-foreground">Tanggal: {label}</p>
         {payload.map((entry: any, index: number) => (
           <div key={index}>
-            <p className="font-bold text-xs">{entry.name}</p>
-            <p className="text-xs">
-              Harga: <span className="font-medium">Rp {entry.value.toLocaleString("id-ID")}</span>
+            <p className="font-bold text-xs text-foreground dark:text-foreground">{entry.name}</p>
+            <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+              Harga: <span className="font-medium text-foreground dark:text-foreground">Rp {entry.value.toLocaleString("id-ID")}</span>
             </p>
           </div>
         ))}

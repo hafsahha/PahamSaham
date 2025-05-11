@@ -111,8 +111,8 @@ export default function StockChart({ data }: PriceChartProps) {
   function rangeBtnClass(active: boolean) {
     return `px-2 py-1 rounded-full text-sm ${
       active
-        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground font-semibold"
-        : "bg-secondary/30 dark:bg-muted/30 text-muted-foreground hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 dark:hover:text-primary-foreground"
+        ? "bg-primary/10 text-primary dark:bg-secondary/70 dark:text-primary-foreground font-semibold"
+        : "bg-background text-muted-foreground hover:bg-primary/10 hover:text-primary dark:bg-card dark:text-muted-foreground dark:hover:bg-secondary/70 dark:hover:text-primary-foreground"
     }`
   }
 
@@ -238,25 +238,41 @@ export default function StockChart({ data }: PriceChartProps) {
       <div className="flex gap-4 flex-wrap mb-4 ml-4">
         <button
           onClick={() => handleLegendClick("Open")}
-          className={`px-3 py-1 rounded-full text-sm ${activeDataKey === "Open" ? "bg-blue-200 text-blue-700 font-medium" : "bg-secondary/30 text-muted-foreground hover:bg-blue-200 hover:text-blue-700"}`}
+          className={`px-3 py-1 rounded-full text-sm ${
+            activeDataKey === "Open"
+              ? "bg-blue-200 text-blue-700 font-medium"
+              : "bg-background text-muted-foreground hover:bg-blue-200 hover:text-blue-700 dark:bg-card dark:text-muted-foreground dark:hover:bg-blue-200 dark:hover:text-blue-700"
+          }`}
         >
           Open
         </button>
         <button
           onClick={() => handleLegendClick("Close")}
-          className={`px-3 py-1 rounded-full text-sm ${activeDataKey === "Close" ? "bg-purple-200 text-purple-700 font-medium" : "bg-secondary/30 text-muted-foreground hover:bg-purple-200 hover:text-purple-700"}`}
+          className={`px-3 py-1 rounded-full text-sm ${
+            activeDataKey === "Close"
+              ? "bg-purple-200 text-purple-700 font-medium"
+              : "bg-background text-muted-foreground hover:bg-purple-200 hover:text-purple-700 dark:bg-card dark:text-muted-foreground dark:hover:bg-purple-200 dark:hover:text-purple-700"
+          }`}
         >
           Close
         </button>
         <button
           onClick={() => handleLegendClick("High")}
-          className={`px-3 py-1 rounded-full text-sm ${activeDataKey === "High" ? "bg-green-200 text-green-700 font-medium" : "bg-secondary/30 text-muted-foreground hover:bg-green-200 hover:text-green-700"}`}
+          className={`px-3 py-1 rounded-full text-sm ${
+            activeDataKey === "High"
+              ? "bg-green-200 text-green-700 font-medium"
+              : "bg-background text-muted-foreground hover:bg-green-200 hover:text-green-700 dark:bg-card dark:text-muted-foreground dark:hover:bg-green-200 dark:hover:text-green-700"
+          }`}
         >
           High
         </button>
         <button
           onClick={() => handleLegendClick("Low")}
-          className={`px-3 py-1 rounded-full text-sm ${activeDataKey === "Low" ? "bg-red-200 text-red-700 font-medium" : "bg-secondary/30 text-muted-foreground hover:bg-red-200 hover:text-red-700"}`}
+          className={`px-3 py-1 rounded-full text-sm ${
+            activeDataKey === "Low"
+              ? "bg-red-200 text-red-700 font-medium"
+              : "bg-background text-muted-foreground hover:bg-red-200 hover:text-red-700 dark:bg-card dark:text-muted-foreground dark:hover:bg-red-200 dark:hover:text-red-700"
+          }`}
         >
           Low
         </button>
@@ -310,7 +326,7 @@ export default function StockChart({ data }: PriceChartProps) {
                   return `${day}/${monthNames[month]}/${year.toString().slice(-2)}`
                 }}
                 ticks={customTicks}
-                axisLine={{ stroke: "#e0e0e0" }}
+                axisLine={{ stroke: "#e0e0e" }}
                 padding={{ left: 10, right: 10 }}
                 height={50}
                 angle={selectedRange === "5d" || selectedRange === "1mo" ? -45 : 0}
