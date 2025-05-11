@@ -268,7 +268,7 @@ services:
     volumes:
       - ./output:/app/output
     environment:
-      MONGO_COLLECTION: "iqplus_data_testing"
+      MONGO_COLLECTION: "iqplus_data"
       INPUT_PATH: /app/output/iqplus_output.json
 
 volumes:
