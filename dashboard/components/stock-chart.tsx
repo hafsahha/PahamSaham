@@ -18,34 +18,43 @@ interface PriceChartProps {
   data: PriceData[]
 }
 
+// Update the CustomTooltip component for better dark mode visibility
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload
     return (
-      <Card className="bg-white p-4 shadow-lg border border-gray-200">
-        <p className="font-bold text-gray-800">{data.Symbol}</p>
-        <p className="text-sm text-gray-600">Tanggal: {data.Date}</p>
+      <Card className="bg-card dark:bg-card p-4 shadow-lg border border-border dark:border-border">
+        <p className="font-bold text-foreground dark:text-foreground">{data.Symbol}</p>
+        <p className="text-sm text-muted-foreground dark:text-muted-foreground">Tanggal: {data.Date}</p>
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
           <p className="text-sm">
-            <span className="text-gray-500">Open:</span>{" "}
-            <span className="font-medium text-gray-500">Rp {data.Open.toLocaleString("id-ID")}</span>
+            <span className="text-muted-foreground dark:text-muted-foreground">Open:</span>{" "}
+            <span className="font-medium text-foreground dark:text-foreground">
+              Rp {data.Open.toLocaleString("id-ID")}
+            </span>
           </p>
           <p className="text-sm">
-            <span className="text-gray-500">Close:</span>{" "}
-            <span className="font-medium text-gray-500">Rp {data.Close.toLocaleString("id-ID")}</span>
+            <span className="text-muted-foreground dark:text-muted-foreground">Close:</span>{" "}
+            <span className="font-medium text-foreground dark:text-foreground">
+              Rp {data.Close.toLocaleString("id-ID")}
+            </span>
           </p>
           <p className="text-sm">
-            <span className="text-gray-500">High:</span>{" "}
-            <span className="font-medium text-green-600">Rp {data.High.toLocaleString("id-ID")}</span>
+            <span className="text-muted-foreground dark:text-muted-foreground">High:</span>{" "}
+            <span className="font-medium text-green-600 dark:text-green-400">
+              Rp {data.High.toLocaleString("id-ID")}
+            </span>
           </p>
           <p className="text-sm">
-            <span className="text-gray-500">Low:</span>{" "}
-            <span className="font-medium text-red-600">Rp {data.Low.toLocaleString("id-ID")}</span>
+            <span className="text-muted-foreground dark:text-muted-foreground">Low:</span>{" "}
+            <span className="font-medium text-red-600 dark:text-red-400">Rp {data.Low.toLocaleString("id-ID")}</span>
           </p>
         </div>
         <p className="text-sm mt-1">
-          <span className="text-gray-500">Volume:</span>{" "}
-          <span className="font-medium text-gray-500">{data.Volume.toLocaleString("id-ID")}</span>
+          <span className="text-muted-foreground dark:text-muted-foreground">Volume:</span>{" "}
+          <span className="font-medium text-foreground dark:text-foreground">
+            {data.Volume.toLocaleString("id-ID")}
+          </span>
         </p>
       </Card>
     )
@@ -101,15 +110,17 @@ export default function StockChart({ data }: PriceChartProps) {
 
   function rangeBtnClass(active: boolean) {
     return `px-2 py-1 rounded-full text-sm ${
-      active ? "bg-primary/10 text-primary font-semibold" : "bg-secondary/30 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+      active
+        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground font-semibold"
+        : "bg-secondary/30 dark:bg-muted/30 text-muted-foreground hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 dark:hover:text-primary-foreground"
     }`
   }
 
-  // Fungsi untuk mendapatkan ticks yang akan ditampilkan berdasarkan range
+  // Update the chart colors and styles for better dark mode visibility
   function getCustomTicks() {
     if (!formattedData.length) return []
 
-    // Untuk opsi "Semua", hanya tampilkan tahun
+    // For option "Semua", only show years
     if (selectedRange === "all") {
       const years = new Set<number>()
       const yearTicks: string[] = []
@@ -131,7 +142,7 @@ export default function StockChart({ data }: PriceChartProps) {
       return yearTicks
     }
 
-    // Untuk opsi "3 Tahun", tampilkan 4 bulan per tahun (Jan, Apr, Jul, Oct)
+    // For option "3 Tahun", show 4 months per year (Jan, Apr, Jul, Oct)
     if (selectedRange === "3y") {
       const quarterTicks: string[] = []
       const targetMonths = [0, 3, 6, 9] // Jan, Apr, Jul, Oct (0-based)
@@ -173,7 +184,7 @@ export default function StockChart({ data }: PriceChartProps) {
       return quarterTicks
     }
 
-    // Untuk opsi "6 Bulan" dan "1 Tahun", tampilkan semua bulan
+    // For option "6 Bulan" and "1 Tahun", show all months
     if (selectedRange === "6mo" || selectedRange === "1y") {
       const monthTicks: string[] = []
       let currentMonth = -1
@@ -194,7 +205,7 @@ export default function StockChart({ data }: PriceChartProps) {
       return monthTicks
     }
 
-    // Untuk opsi "5 Hari" dan "1 Bulan", tampilkan semua hari
+    // For option "5 Hari" and "1 Bulan", show all days
     return formattedData.map((item) => item.Date)
   }
 
@@ -272,7 +283,20 @@ export default function StockChart({ data }: PriceChartProps) {
                   const year = date.getFullYear()
                   const month = date.getMonth()
                   const day = date.getDate()
-                  const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]
+                  const monthNames = [
+                    "Jan",
+                    "Feb",
+                    "Mar",
+                    "Apr",
+                    "Mei",
+                    "Jun",
+                    "Jul",
+                    "Agu",
+                    "Sep",
+                    "Okt",
+                    "Nov",
+                    "Des",
+                  ]
 
                   if (selectedRange === "all") {
                     return `${year}`

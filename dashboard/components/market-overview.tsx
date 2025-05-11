@@ -6,24 +6,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // Interface untuk data dari API
 interface MarketData {
-  name: string;
-  value: number;
-  changePercent: number;
+  name: string
+  value: number
+  changePercent: number
 }
 
 // Fungsi untuk fetch data dari API
 async function fetchMarketData(type: string): Promise<MarketData[]> {
   try {
-    const apiUrl = `http://localhost:5000/api/harga?type=${type}`; // Sesuaikan dengan struktur API Anda
-    const res = await fetch(apiUrl, { cache: "no-store" });
+    const apiUrl = `http://localhost:5000/api/harga?type=${type}` // Sesuaikan dengan struktur API Anda
+    const res = await fetch(apiUrl, { cache: "no-store" })
     if (!res.ok) {
-      throw new Error(`Failed to fetch ${type} data: ${res.status} ${res.statusText}`);
+      throw new Error(`Failed to fetch ${type} data: ${res.status} ${res.statusText}`)
     }
-    const data = await res.json();
+    const data = await res.json()
     // Asumsi data dari API dalam format: [{ name: "IHSG", value: 7234.56, changePercent: 1.2 }, ...]
-    return data;
+    return data
   } catch (error) {
-    console.error(`Error fetching ${type} data:`, error);
+    console.error(`Error fetching ${type} data:`, error)
     // Fallback data jika API gagal
     switch (type) {
       case "indices":
@@ -36,7 +36,7 @@ async function fetchMarketData(type: string): Promise<MarketData[]> {
           { name: "IDXBUMN20", value: 432.15, changePercent: 1.5 },
           { name: "IDXSMC-LIQ", value: 345.67, changePercent: 0.2 },
           { name: "IDXESGL", value: 287.65, changePercent: -0.7 },
-        ];
+        ]
       case "sectors":
         return [
           { name: "Keuangan", value: 1234.56, changePercent: 2.1 },
@@ -47,71 +47,72 @@ async function fetchMarketData(type: string): Promise<MarketData[]> {
           { name: "Pertanian", value: 321.98, changePercent: 0.4 },
           { name: "Teknologi", value: 876.54, changePercent: 3.2 },
           { name: "Kesehatan", value: 654.32, changePercent: 1.5 },
-        ];
+        ]
       case "commodities":
         return [
           { name: "Minyak Mentah", value: 75.43, changePercent: 2.3 },
           { name: "Emas", value: 1876.54, changePercent: 0.5 },
           { name: "CPO", value: 11450, changePercent: -0.7 },
           { name: "Batubara", value: 98.75, changePercent: 1.2 },
-        ];
+        ]
       case "forex":
         return [
           { name: "USD/IDR", value: 15432, changePercent: -0.3 },
           { name: "EUR/IDR", value: 16789, changePercent: 0.2 },
           { name: "JPY/IDR", value: 107.65, changePercent: -0.5 },
           { name: "SGD/IDR", value: 11432, changePercent: 0.1 },
-        ];
+        ]
       default:
-        return [];
+        return []
     }
   }
 }
 
 export default function MarketOverview() {
-  const [indicesData, setIndicesData] = useState<MarketData[]>([]);
-  const [sectorsData, setSectorsData] = useState<MarketData[]>([]);
-  const [commoditiesData, setCommoditiesData] = useState<MarketData[]>([]);
-  const [forexData, setForexData] = useState<MarketData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [indicesData, setIndicesData] = useState<MarketData[]>([])
+  const [sectorsData, setSectorsData] = useState<MarketData[]>([])
+  const [commoditiesData, setCommoditiesData] = useState<MarketData[]>([])
+  const [forexData, setForexData] = useState<MarketData[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   // Fetch data saat komponen dimuat
   useEffect(() => {
     async function loadMarketData() {
-      setIsLoading(true);
+      setIsLoading(true)
       const [indices, sectors, commodities, forex] = await Promise.all([
         fetchMarketData("indices"),
         fetchMarketData("sectors"),
         fetchMarketData("commodities"),
         fetchMarketData("forex"),
-      ]);
-      setIndicesData(indices);
-      setSectorsData(sectors);
-      setCommoditiesData(commodities);
-      setForexData(forex);
-      setIsLoading(false);
+      ])
+      setIndicesData(indices)
+      setSectorsData(sectors)
+      setCommoditiesData(commodities)
+      setForexData(forex)
+      setIsLoading(false)
     }
-    loadMarketData();
-  }, []);
+    loadMarketData()
+  }, [])
 
   // Format nilai untuk ditampilkan
   const formatValue = (value: number, type: string) => {
     if (type === "commodities") {
-      if (value > 1000) return `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      return `Rp${value.toLocaleString("id-ID")}`;
+      if (value > 1000)
+        return `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      return `Rp${value.toLocaleString("id-ID")}`
     }
     if (type === "forex") {
-      return value.toLocaleString("id-ID", { minimumFractionDigits: 0 });
+      return value.toLocaleString("id-ID", { minimumFractionDigits: 0 })
     }
-    return value.toLocaleString("id-ID", { minimumFractionDigits: 2 });
-  };
+    return value.toLocaleString("id-ID", { minimumFractionDigits: 2 })
+  }
 
   const formatChange = (changePercent: number) => {
-    return `${changePercent >= 0 ? "+" : ""}${changePercent.toFixed(1)}%`;
-  };
+    return `${changePercent >= 0 ? "+" : ""}${changePercent.toFixed(1)}%`
+  }
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm border-secondary/20 overflow-hidden">
+    <Card className="bg-white/80 dark:bg-background/80 backdrop-blur-sm border-secondary/20 overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-accent to-primary/70"></div>
       <CardHeader>
         <CardTitle>Ringkasan Pasar</CardTitle>
@@ -122,14 +123,17 @@ export default function MarketOverview() {
           <div className="text-center text-muted-foreground">Loading data pasar...</div>
         ) : (
           <Tabs defaultValue="indices">
-            <TabsList className="mb-4 bg-secondary/20">
+            <TabsList className="mb-4 bg-secondary/20 dark:bg-muted/20">
               <TabsTrigger value="indices" className="data-[state=active]:bg-primary data-[state=active]:text-white">
                 Indeks
               </TabsTrigger>
               <TabsTrigger value="sectors" className="data-[state=active]:bg-primary data-[state=active]:text-white">
                 Sektor
               </TabsTrigger>
-              <TabsTrigger value="commodities" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+              <TabsTrigger
+                value="commodities"
+                className="data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
                 Komoditas
               </TabsTrigger>
               <TabsTrigger value="forex" className="data-[state=active]:bg-primary data-[state=active]:text-white">
@@ -204,11 +208,13 @@ interface MarketTileProps {
 
 function MarketTile({ name, value, change, isPositive }: MarketTileProps) {
   return (
-    <div className="bg-white rounded-lg p-3 shadow-sm border border-secondary/10 relative overflow-hidden group hover:border-primary/20 transition-colors">
+    <div className="bg-white dark:bg-card rounded-lg p-3 shadow-sm border border-secondary/10 dark:border-border relative overflow-hidden group hover:border-primary/20 transition-colors">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-      <div className="text-sm font-medium text-primary">{name}</div>
-      <div className="text-lg font-bold mt-1">{value}</div>
-      <div className={`text-sm mt-1 ${isPositive ? "text-accent" : "text-red-500"}`}>{change}</div>
+      <div className="text-sm font-medium text-primary dark:text-primary">{name}</div>
+      <div className="text-lg font-bold mt-1 text-foreground dark:text-foreground">{value}</div>
+      <div className={`text-sm mt-1 ${isPositive ? "text-accent dark:text-accent" : "text-red-500 dark:text-red-400"}`}>
+        {change}
+      </div>
     </div>
   )
 }

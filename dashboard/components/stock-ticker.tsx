@@ -25,7 +25,7 @@ export default function StockTicker() {
   ]
 
   return (
-    <div className="hidden md:block flex-1 overflow-hidden bg-white/50 backdrop-blur-sm border-x border-secondary/20">
+    <div className="hidden md:block flex-1 overflow-hidden bg-white/50 dark:bg-background/50 backdrop-blur-sm border-x border-secondary/20">
       <div className="ticker-wrap">
         <div className="ticker">
           {tickerItems.map((item, index) => (

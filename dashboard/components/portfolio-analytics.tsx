@@ -40,12 +40,13 @@ export default function PortfolioAnalytics() {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    // Draw chart background
-    ctx.fillStyle = "rgba(255, 255, 255, 0.5)"
+    // Draw chart background - improved for dark mode
+    const isDarkMode = document.documentElement.classList.contains("dark")
+    ctx.fillStyle = isDarkMode ? "rgba(30, 41, 59, 0.5)" : "rgba(255, 255, 255, 0.5)"
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-    // Draw grid lines
-    ctx.strokeStyle = "rgba(30, 58, 138, 0.1)"
+    // Draw grid lines - improved for dark mode
+    ctx.strokeStyle = isDarkMode ? "rgba(71, 85, 105, 0.3)" : "rgba(30, 58, 138, 0.1)"
     ctx.lineWidth = 1
 
     // Horizontal grid lines
@@ -57,16 +58,16 @@ export default function PortfolioAnalytics() {
       ctx.lineTo(padding + chartWidth, y)
       ctx.stroke()
 
-      // Add price labels
+      // Add price labels - improved for dark mode
       const value = maxValue - (valueRange / gridLines) * i
-      ctx.fillStyle = "#64748b"
+      ctx.fillStyle = isDarkMode ? "#94a3b8" : "#64748b"
       ctx.font = "10px sans-serif"
       ctx.textAlign = "right"
       ctx.fillText(`Rp${(value / 1000000).toFixed(1)}M`, padding - 5, y + 3)
     }
 
-    // Draw line chart
-    ctx.strokeStyle = "#1E3A8A"
+    // Draw line chart - improved for dark mode
+    ctx.strokeStyle = isDarkMode ? "#60a5fa" : "#1E3A8A"
     ctx.lineWidth = 2
     ctx.beginPath()
 
@@ -83,10 +84,15 @@ export default function PortfolioAnalytics() {
     })
     ctx.stroke()
 
-    // Add gradient fill under the line
+    // Add gradient fill under the line - improved for dark mode
     const gradient = ctx.createLinearGradient(0, padding, 0, padding + chartHeight)
-    gradient.addColorStop(0, "rgba(30, 58, 138, 0.2)")
-    gradient.addColorStop(1, "rgba(30, 58, 138, 0)")
+    if (isDarkMode) {
+      gradient.addColorStop(0, "rgba(59, 130, 246, 0.3)")
+      gradient.addColorStop(1, "rgba(59, 130, 246, 0)")
+    } else {
+      gradient.addColorStop(0, "rgba(30, 58, 138, 0.2)")
+      gradient.addColorStop(1, "rgba(30, 58, 138, 0)")
+    }
 
     ctx.fillStyle = gradient
     ctx.beginPath()
@@ -106,9 +112,9 @@ export default function PortfolioAnalytics() {
     ctx.closePath()
     ctx.fill()
 
-    // Add data points
-    ctx.fillStyle = "#ffffff"
-    ctx.strokeStyle = "#1E3A8A"
+    // Add data points - improved for dark mode
+    ctx.fillStyle = isDarkMode ? "#1e293b" : "#ffffff"
+    ctx.strokeStyle = isDarkMode ? "#60a5fa" : "#1E3A8A"
     ctx.lineWidth = 2
 
     data.forEach((value, index) => {
@@ -124,20 +130,20 @@ export default function PortfolioAnalytics() {
       }
     })
 
-    // Add month labels
+    // Add month labels - improved for dark mode
     const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]
 
     months.forEach((month, i) => {
       if (i < data.length) {
         const x = padding + (chartWidth / (data.length - 1)) * i
-        ctx.fillStyle = "#64748b"
+        ctx.fillStyle = isDarkMode ? "#94a3b8" : "#64748b"
         ctx.font = "10px sans-serif"
         ctx.textAlign = "center"
         ctx.fillText(month, x, padding + chartHeight + 15)
       }
     })
 
-    // Pie chart for portfolio allocation
+    // Pie chart for portfolio allocation - improved for dark mode
     const pieCanvas = pieChartRef.current
     if (!pieCanvas) return
 
@@ -150,11 +156,11 @@ export default function PortfolioAnalytics() {
 
     // Sample data - would come from API in real app
     const pieData = [
-      { label: "Perbankan", value: 45, color: "#1E3A8A" },
-      { label: "Telekomunikasi", value: 20, color: "#10B981" },
-      { label: "Konsumer", value: 15, color: "#6366F1" },
-      { label: "Properti", value: 10, color: "#F59E0B" },
-      { label: "Lainnya", value: 10, color: "#EC4899" },
+      { label: "Perbankan", value: 45, color: isDarkMode ? "#3b82f6" : "#1E3A8A" },
+      { label: "Telekomunikasi", value: 20, color: isDarkMode ? "#10b981" : "#10B981" },
+      { label: "Konsumer", value: 15, color: isDarkMode ? "#8b5cf6" : "#6366F1" },
+      { label: "Properti", value: 10, color: isDarkMode ? "#f59e0b" : "#F59E0B" },
+      { label: "Lainnya", value: 10, color: isDarkMode ? "#ec4899" : "#EC4899" },
     ]
 
     // Clear canvas
@@ -194,21 +200,21 @@ export default function PortfolioAnalytics() {
       startAngle += sliceAngle
     })
 
-    // Draw center circle (donut hole)
+    // Draw center circle (donut hole) - improved for dark mode
     pieCtx.beginPath()
     pieCtx.arc(centerX, centerY, radius * 0.5, 0, 2 * Math.PI)
-    pieCtx.fillStyle = "#FFFFFF"
+    pieCtx.fillStyle = isDarkMode ? "#1e293b" : "#FFFFFF"
     pieCtx.fill()
 
-    // Draw title in center
-    pieCtx.fillStyle = "#1E3A8A"
+    // Draw title in center - improved for dark mode
+    pieCtx.fillStyle = isDarkMode ? "#60a5fa" : "#1E3A8A"
     pieCtx.font = "bold 14px sans-serif"
     pieCtx.textAlign = "center"
     pieCtx.textBaseline = "middle"
     pieCtx.fillText("Alokasi", centerX, centerY - 10)
     pieCtx.fillText("Portofolio", centerX, centerY + 10)
 
-    // Draw legend
+    // Draw legend - improved for dark mode
     const legendX = pieCanvas.width - 100
     const legendY = 30
     const legendSpacing = 25
@@ -220,8 +226,8 @@ export default function PortfolioAnalytics() {
       pieCtx.fillStyle = item.color
       pieCtx.fillRect(legendX, y, 15, 15)
 
-      // Draw label
-      pieCtx.fillStyle = "#64748b"
+      // Draw label - improved for dark mode
+      pieCtx.fillStyle = isDarkMode ? "#cbd5e1" : "#64748b"
       pieCtx.font = "12px sans-serif"
       pieCtx.textAlign = "left"
       pieCtx.textBaseline = "middle"
@@ -230,7 +236,7 @@ export default function PortfolioAnalytics() {
   }, [])
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm border-secondary/20 card-hover">
+    <Card className="bg-white/80 dark:bg-background/80 backdrop-blur-sm border-secondary/20 card-hover">
       <CardHeader>
         <CardTitle>Portofolio Saya</CardTitle>
         <CardDescription className="flex items-center justify-between">
@@ -245,7 +251,7 @@ export default function PortfolioAnalytics() {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="performance">
-          <TabsList className="mb-4 bg-secondary/20">
+          <TabsList className="mb-4 bg-secondary/20 dark:bg-muted/20">
             <TabsTrigger value="performance" className="data-[state=active]:bg-primary data-[state=active]:text-white">
               Performa
             </TabsTrigger>
@@ -269,7 +275,7 @@ export default function PortfolioAnalytics() {
           <TabsContent value="summary">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-4">
-                <div className="bg-secondary/20 p-4 rounded-lg">
+                <div className="bg-secondary/20 dark:bg-muted/20 p-4 rounded-lg">
                   <h3 className="text-sm font-medium text-muted-foreground mb-2">Performa Portofolio</h3>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
@@ -290,7 +296,7 @@ export default function PortfolioAnalytics() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-secondary/20 p-4 rounded-lg">
+                <div className="bg-secondary/20 dark:bg-muted/20 p-4 rounded-lg">
                   <h3 className="text-sm font-medium text-muted-foreground mb-2">Dividen</h3>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
@@ -305,7 +311,7 @@ export default function PortfolioAnalytics() {
                 </div>
               </div>
               <div className="space-y-4">
-                <div className="bg-secondary/20 p-4 rounded-lg">
+                <div className="bg-secondary/20 dark:bg-muted/20 p-4 rounded-lg">
                   <h3 className="text-sm font-medium text-muted-foreground mb-2">Saham Terbaik</h3>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
@@ -324,7 +330,7 @@ export default function PortfolioAnalytics() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-secondary/20 p-4 rounded-lg">
+                <div className="bg-secondary/20 dark:bg-muted/20 p-4 rounded-lg">
                   <h3 className="text-sm font-medium text-muted-foreground mb-2">Saham Terburuk</h3>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">

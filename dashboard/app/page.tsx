@@ -42,117 +42,118 @@ import StockNews from "@/components/stock-news"
 import StockTicker from "@/components/stock-ticker"
 import StockComparison from "@/components/stock-comparison"
 import PortfolioAnalytics from "@/components/portfolio-analytics"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 // Interface untuk tipe data dari API
 interface Emiten {
-  ticker: string;
-  name: string;
+  ticker: string
+  name: string
 }
 
 interface PriceData {
-  Close: number;
-  Date: string;
-  High: number;
-  Low: number;
-  Open: number;
-  Symbol: string;
-  Volume: number;
+  Close: number
+  Date: string
+  High: number
+  Low: number
+  Open: number
+  Symbol: string
+  Volume: number
 }
 
 interface StockData {
-  price: number;
-  change: number;
-  changePercent: number;
-  open: number;
-  high: number;
-  low: number;
-  volume: number;
+  price: number
+  change: number
+  changePercent: number
+  open: number
+  high: number
+  low: number
+  volume: number
 }
 
 // Fungsi untuk fetch data emiten
 async function fetchEmiten(): Promise<Emiten[]> {
   try {
-    const apiUrl = "http://localhost:5000/api/emiten";
-    const res = await fetch(apiUrl, { cache: "no-store" });
+    const apiUrl = "http://localhost:5000/api/emiten"
+    const res = await fetch(apiUrl, { cache: "no-store" })
     if (!res.ok) {
-      throw new Error(`Failed to fetch emiten: ${res.status} ${res.statusText}`);
+      throw new Error(`Failed to fetch emiten: ${res.status} ${res.statusText}`)
     }
-    const tickers: string[] = await res.json();
-    console.log("Fetched emitens:", tickers);
-    return tickers.map(ticker => ({ ticker, name: ticker.split('.')[0] }));
+    const tickers: string[] = await res.json()
+    console.log("Fetched emitens:", tickers)
+    return tickers.map((ticker) => ({ ticker, name: ticker.split(".")[0] }))
   } catch (error) {
-    console.error("Error fetching emitens:", error);
-    return [{ ticker: "BBRI.JK", name: "BBRI" }];
+    console.error("Error fetching emitens:", error)
+    return [{ ticker: "BBRI.JK", name: "BBRI" }]
   }
 }
 
 // Fungsi untuk fetch data harga
 async function fetchPriceData(emiten: string, period: string): Promise<PriceData[]> {
   try {
-    const apiUrl = `http://localhost:5000/api/harga?emiten=${emiten}&period=${period}`;
-    const res = await fetch(apiUrl, { cache: "no-store" });
-    if (!res.ok) throw new Error("Failed to fetch price data");
-    return await res.json();
+    const apiUrl = `http://localhost:5000/api/harga?emiten=${emiten}&period=${period}`
+    const res = await fetch(apiUrl, { cache: "no-store" })
+    if (!res.ok) throw new Error("Failed to fetch price data")
+    return await res.json()
   } catch (error) {
-    console.error(error);
-    return [];
+    console.error(error)
+    return []
   }
 }
 
 // Komponen untuk baris tabel saham
 function StockRow({ emiten }: { emiten: Emiten }) {
-  const [stockPriceData, setStockPriceData] = useState<StockData | null>(null);
+  const [stockPriceData, setStockPriceData] = useState<StockData | null>(null)
 
   useEffect(() => {
     async function loadStockPrice() {
-      const data = await fetchPriceData(emiten.ticker, "yearly");
-      setStockPriceData(calculateStockData(data));
+      const data = await fetchPriceData(emiten.ticker, "yearly")
+      setStockPriceData(calculateStockData(data))
     }
-    loadStockPrice();
-  }, [emiten.ticker]);
+    loadStockPrice()
+  }, [emiten.ticker])
 
-  const formatCurrency = (value: number) => `Rp${value.toLocaleString("id-ID")}`;
-  const formatPercentage = (value: number) => `${value.toFixed(1)}%`;
-  const formatVolume = (value: number) => `${(value / 1000000).toFixed(1)}M`;
+  const formatCurrency = (value: number) => `Rp${value.toLocaleString("id-ID")}`
+  const formatPercentage = (value: number) => `${value.toFixed(1)}%`
+  const formatVolume = (value: number) => `${(value / 1000000).toFixed(1)}M`
 
   return (
     <TableRow className="hover:bg-secondary/5">
       <TableCell className="font-medium">{emiten.ticker}</TableCell>
       <TableCell>{emiten.name}</TableCell>
-      <TableCell className="text-right">
-        {stockPriceData ? formatCurrency(stockPriceData.price) : "N/A"}
-      </TableCell>
+      <TableCell className="text-right">{stockPriceData ? formatCurrency(stockPriceData.price) : "N/A"}</TableCell>
       <TableCell
         className={`text-right ${stockPriceData && stockPriceData.change >= 0 ? "text-accent" : "text-red-500"}`}
       >
-        {stockPriceData ? (stockPriceData.change >= 0 ? "+" : "-") + formatCurrency(Math.abs(stockPriceData.change)) : "N/A"}
+        {stockPriceData
+          ? (stockPriceData.change >= 0 ? "+" : "-") + formatCurrency(Math.abs(stockPriceData.change))
+          : "N/A"}
       </TableCell>
       <TableCell
         className={`text-right ${stockPriceData && stockPriceData.changePercent >= 0 ? "text-accent" : "text-red-500"}`}
       >
-        {stockPriceData ? (stockPriceData.changePercent >= 0 ? "+" : "-") + formatPercentage(Math.abs(stockPriceData.changePercent)) : "N/A"}
+        {stockPriceData
+          ? (stockPriceData.changePercent >= 0 ? "+" : "-") + formatPercentage(Math.abs(stockPriceData.changePercent))
+          : "N/A"}
       </TableCell>
-      <TableCell className="text-right">
-        {stockPriceData ? formatVolume(stockPriceData.volume) : "N/A"}
-      </TableCell>
+      <TableCell className="text-right">{stockPriceData ? formatVolume(stockPriceData.volume) : "N/A"}</TableCell>
       <TableCell>
         <Button variant="ghost" size="icon" className="hover:bg-accent/10 hover:text-accent">
           <Plus className="h-4 w-4" />
         </Button>
       </TableCell>
     </TableRow>
-  );
+  )
 }
 
 // Hitung data saham (price, change, dll.) dari data harga
 function calculateStockData(prices: PriceData[]): StockData | null {
-  if (prices.length < 1) return null;
-  const latest = prices[prices.length - 1];
-  const previous = prices.length > 1 ? prices[prices.length - 2] : null;
-  
-  const price = latest.Close;
-  const change = previous ? price - previous.Close : 0;
-  const changePercent = previous ? (change / previous.Close) * 100 : 0;
+  if (prices.length < 1) return null
+  const latest = prices[prices.length - 1]
+  const previous = prices.length > 1 ? prices[prices.length - 2] : null
+
+  const price = latest.Close
+  const change = previous ? price - previous.Close : 0
+  const changePercent = previous ? (change / previous.Close) * 100 : 0
 
   return {
     price,
@@ -162,50 +163,51 @@ function calculateStockData(prices: PriceData[]): StockData | null {
     high: latest.High,
     low: latest.Low,
     volume: latest.Volume,
-  };
+  }
 }
 
 // Komponen Client
 export default function Dashboard() {
-  const [initialEmiten, setInitialEmiten] = useState<Emiten[]>([]);
-  const [activeStock, setActiveStock] = useState("BBRI.JK");
-  const [priceData, setPriceData] = useState<PriceData[]>([]);
-  const [stockData, setStockData] = useState<StockData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [initialEmiten, setInitialEmiten] = useState<Emiten[]>([])
+  const [activeStock, setActiveStock] = useState("BBRI.JK")
+  const [priceData, setPriceData] = useState<PriceData[]>([])
+  const [stockData, setStockData] = useState<StockData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
 
   // Fetch daftar emiten saat komponen dimuat
   useEffect(() => {
     async function loadInitialEmiten() {
-      setIsLoading(true);
-      const emitens = await fetchEmiten();
-      setInitialEmiten(emitens);
-      setActiveStock(emitens[0]?.ticker || "BBRI.JK");
-      setIsLoading(false);
+      setIsLoading(true)
+      const emitens = await fetchEmiten()
+      setInitialEmiten(emitens)
+      setActiveStock(emitens[0]?.ticker || "BBRI.JK")
+      setIsLoading(false)
     }
-    loadInitialEmiten();
-  }, []);
+    loadInitialEmiten()
+  }, [])
 
   // Fetch data harga saat activeStock berubah
   useEffect(() => {
     async function loadPriceData() {
-      if (!activeStock) return;
-      const data = await fetchPriceData(activeStock, "yearly");
-      setPriceData(data);
-      setStockData(calculateStockData(data));
+      if (!activeStock) return
+      const data = await fetchPriceData(activeStock, "yearly")
+      setPriceData(data)
+      setStockData(calculateStockData(data))
     }
-    loadPriceData();
-  }, [activeStock]);
+    loadPriceData()
+  }, [activeStock])
 
   // Filter emiten berdasarkan pencarian
-  const filteredEmiten = initialEmiten.filter(emiten =>
-    emiten.ticker.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emiten.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredEmiten = initialEmiten.filter(
+    (emiten) =>
+      emiten.ticker.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emiten.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
 
-  const formatCurrency = (value: number) => `Rp${value.toLocaleString("id-ID")}`;
-  const formatPercentage = (value: number) => `${value.toFixed(1)}%`;
-  const formatVolume = (value: number) => `${(value / 1000000).toFixed(1)}M`;
+  const formatCurrency = (value: number) => `Rp${value.toLocaleString("id-ID")}`
+  const formatPercentage = (value: number) => `${value.toFixed(1)}%`
+  const formatVolume = (value: number) => `${(value / 1000000).toFixed(1)}M`
 
   if (isLoading) {
     return (
@@ -231,19 +233,20 @@ export default function Dashboard() {
           <div>Loading...</div>
         </div>
       </div>
-    );
+    )
   }
 
+  // Update the background gradient for better dark mode visibility
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-secondary/50 to-secondary">
-      <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-white/80 backdrop-blur-md px-6 shadow-sm">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-secondary/50 to-secondary dark:from-background dark:to-background">
+      <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-white/80 dark:bg-background/95 backdrop-blur-md px-6 shadow-sm">
         <Button variant="ghost" size="icon" className="md:hidden">
           <Menu className="h-5 w-5" />
           <span className="sr-only">Toggle menu</span>
         </Button>
         <div className="flex items-center gap-2">
           <div className="bg-primary rounded-lg p-1.5">
-            <LineChart className="h-5 w-5 text-white" />
+            <LineChart className="h-5 w-5 text-white dark:text-primary-foreground" />
           </div>
           <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             pahamsaham
@@ -257,14 +260,14 @@ export default function Dashboard() {
               <Input
                 type="search"
                 placeholder="Cari saham..."
-                className="w-64 pl-8 border-secondary/30 bg-white/80 focus:border-accent"
+                className="w-64 pl-8 border-secondary/30 bg-white/80 dark:bg-background/80 focus:border-accent"
               />
             </div>
           </form>
           <Button
             variant="outline"
             size="icon"
-            className="rounded-full border-secondary/30 bg-white/80 hover:bg-accent/10 hover:text-accent relative"
+            className="rounded-full border-secondary/30 bg-white/80 dark:bg-background/80 hover:bg-accent/10 hover:text-accent relative"
           >
             <Bell className="h-5 w-5" />
             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] text-white">
@@ -275,18 +278,19 @@ export default function Dashboard() {
           <Button
             variant="outline"
             size="icon"
-            className="rounded-full border-secondary/30 bg-white/80 hover:bg-accent/10 hover:text-accent"
+            className="rounded-full border-secondary/30 bg-white/80 dark:bg-background/80 hover:bg-accent/10 hover:text-accent"
           >
             <Settings className="h-5 w-5" />
             <span className="sr-only">Pengaturan</span>
           </Button>
+          <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="gap-2 rounded-full border-secondary/30 bg-white/80 hover:bg-accent/10 hover:text-accent"
+                className="gap-2 rounded-full border-secondary/30 bg-white/80 dark:bg-background/80 hover:bg-accent/10 hover:text-accent"
               >
-                <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium">
+                <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium dark:bg-primary/10">
                   JD
                 </div>
                 <span className="hidden md:inline-flex">John Doe</span>
@@ -307,7 +311,7 @@ export default function Dashboard() {
       </header>
 
       <div className="flex flex-1">
-        <aside className="hidden md:block border-r bg-white/80 backdrop-blur-sm fixed top-16 left-0 w-[240px] h-[calc(100vh-64px)] z-40">
+        <aside className="hidden md:block border-r bg-white/80 dark:bg-background/95 backdrop-blur-sm fixed top-16 left-0 w-[240px] h-[calc(100vh-64px)] z-40">
           <div className="flex flex-col h-full gap-2 p-4">
             <div className="flex items-center gap-2 mb-2">
               <Input
@@ -334,7 +338,9 @@ export default function Dashboard() {
                       <span className="text-xs text-muted-foreground">{emiten.name}</span>
                     </div>
                     {stockData && emiten.ticker === activeStock && (
-                      <div className={`flex items-center gap-1 ${stockData.changePercent >= 0 ? "text-accent" : "text-red-500"}`}>
+                      <div
+                        className={`flex items-center gap-1 ${stockData.changePercent >= 0 ? "text-accent" : "text-red-500"}`}
+                      >
                         {stockData.changePercent >= 0 ? (
                           <ArrowUp className="h-3 w-3" />
                         ) : (
@@ -438,17 +444,23 @@ export default function Dashboard() {
               </div>
             </div>
             <Tabs defaultValue="overview" className="space-y-4">
-              <TabsList className="bg-white/80 p-1">
+              <TabsList className="bg-white/80 dark:bg-background/80 p-1">
                 <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-white">
                   Ringkasan
                 </TabsTrigger>
                 <TabsTrigger value="stocks" className="data-[state=active]:bg-primary data-[state=active]:text-white">
                   Saham
                 </TabsTrigger>
-                <TabsTrigger value="portfolio" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                <TabsTrigger
+                  value="portfolio"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-white"
+                >
                   Portofolio
                 </TabsTrigger>
-                <TabsTrigger value="comparison" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                <TabsTrigger
+                  value="comparison"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-white"
+                >
                   Perbandingan
                 </TabsTrigger>
                 <TabsTrigger value="news" className="data-[state=active]:bg-primary data-[state=active]:text-white">
@@ -468,13 +480,18 @@ export default function Dashboard() {
                         {stockData ? (
                           <div className="flex items-center gap-2">
                             <span className="text-2xl font-bold">{formatCurrency(stockData.price)}</span>
-                            <div className={`flex items-center gap-1 ${stockData.change >= 0 ? "text-accent" : "text-red-500"}`}>
+                            <div
+                              className={`flex items-center gap-1 ${stockData.change >= 0 ? "text-accent" : "text-red-500"}`}
+                            >
                               {stockData.change >= 0 ? (
                                 <ArrowUp className="h-4 w-4" />
                               ) : (
                                 <ArrowDown className="h-4 w-4" />
                               )}
-                              <span>{formatCurrency(Math.abs(stockData.change))} ({formatPercentage(Math.abs(stockData.changePercent))})</span>
+                              <span>
+                                {formatCurrency(Math.abs(stockData.change))} (
+                                {formatPercentage(Math.abs(stockData.changePercent))})
+                              </span>
                             </div>
                           </div>
                         ) : (
@@ -546,12 +563,12 @@ export default function Dashboard() {
                       <TableBody>
                         {initialEmiten.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={7} className="text-center">Loading saham...</TableCell>
+                            <TableCell colSpan={7} className="text-center">
+                              Loading saham...
+                            </TableCell>
                           </TableRow>
                         ) : (
-                          initialEmiten.map((emiten) => (
-                            <StockRow key={emiten.ticker} emiten={emiten} />
-                          ))
+                          initialEmiten.map((emiten) => <StockRow key={emiten.ticker} emiten={emiten} />)
                         )}
                       </TableBody>
                     </Table>
@@ -605,5 +622,5 @@ export default function Dashboard() {
         </main>
       </div>
     </div>
-  );
+  )
 }
