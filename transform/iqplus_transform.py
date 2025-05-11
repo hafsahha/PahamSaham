@@ -15,7 +15,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Initialize Ollama client
-OLLAMA_API = os.getenv("OLLAMA_API", "http://ollama:11434")
+OLLAMA_API = os.getenv("OLLAMA_API")
 client = Client(host=OLLAMA_API)
 
 def check_ollama_availability():
@@ -85,7 +85,7 @@ def summarize_news(text):
     start_time = time.time()
     try:
         response = client.chat(
-            model="phi3",
+            model="tinyllama",
             messages=[
                 {"role": "system", "content": "Tidak usah menggunakan kalimat pembuka, berikan ringkasan bahasa Indonesia berisi sekitar 50 kata dari artikel ini:"},
                 {"role": "user", "content": text}
@@ -106,7 +106,7 @@ def analyze_sentiment(text):
     start_time = time.time()
     try:
         response = client.chat(
-            model="phi3",
+            model="tinyllama",
             messages=[
                 {"role": "system", "content": "analisis sentimen artikel ini, Hanya jawab dengan satu kata!: 'positif'/'netral'/'negatif'"},
                 {"role": "user", "content": text}
@@ -227,13 +227,11 @@ def main(category, date=None):
     """Main workflow"""
     date = date or datetime.now().strftime("%Y-%m-%d")
     input_file = f"iqplus_{category}_{date}.json"
-    output_file = "iqplus_output.json"
     
-    input_dir = os.getenv("INPUT_PATH", "../output")
-    output_dir = os.getenv("OUTPUT_PATH", "../output")
+    input_dir = os.getenv("INPUT_PATH")
     
     input_path = os.path.join(input_dir, input_file)
-    output_path = os.path.join(output_dir, output_file)
+    output_path = os.path.join("OUTPUT_PATH")
     
     if os.path.exists(input_path):
         logger.info(f"🔧 Processing {input_file}...")

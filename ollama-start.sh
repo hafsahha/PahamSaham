@@ -15,9 +15,9 @@ until curl -s http://localhost:11434 > /dev/null; do
   ELAPSED=$((ELAPSED + 5))
 done
 echo "Ollama server is ready!"
-echo "Pulling phi3 model..."
-ollama pull phi3 || {
-  echo "Error: Failed to pull phi3 model"
+echo "Pulling tinyllama model..."
+ollama pull tinyllama || {
+  echo "Error: Failed to pull tinyllama model"
   kill $OLLAMA_PID
   exit 1
 }
