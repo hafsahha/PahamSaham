@@ -5,6 +5,10 @@ from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 from datetime import datetime
 
+# set dsini yh ...
+used_path = '/app/output/yfinance_test_airflow.json'
+mongo_coll = 'yfinance_airflow'
+
 # Mendapatkan path host yang benar dari mount container saat ini
 client = docker.from_env()
 
@@ -12,11 +16,11 @@ client = docker.from_env()
 current_container = client.containers.get(os.environ['HOSTNAME'])
 for mount in current_container.attrs['Mounts']:
     if mount['Destination'] == '/opt/airflow/output':
-        host_output_path = mount['Source']  # Path absolut di host, misalnya /path/to/project/output
+        host_output_path = mount['Source'] 
         break
 else:
     raise Exception("Mount point /opt/airflow/output not found in container")
-    
+
 print("Host output path:", host_output_path)
 
 default_args = {
@@ -46,7 +50,7 @@ with DAG(
         command="python yfinance_extract.py",
         container_name="pipeline_extract_yfinance",
         environment={
-            'YFINANCE_OUTPUT_PATH': '/app/output/yfinance_output.json'
+            'YFINANCE_OUTPUT_PATH': used_path
         },
     )
     
@@ -60,8 +64,12 @@ with DAG(
         mounts=[
             Mount(source=host_output_path, target='/app/output', type='bind')
         ],
-        command="python yfinance_load.py",
-        container_name="pipeline_load_yfinance"
+        command="python loader.py",
+        container_name="pipeline_load_yfinance",
+        environment={
+            'MONGO_COLLECTION': mongo_coll,
+            'INPUT_PATH': used_path
+        },
     )
     
     extract_yfinance >> load_yfinance
