@@ -151,18 +151,31 @@ services:
     restart: on-failure
     command: ["python", "idx_extract.py"]
 
-  # extract_iqplus:
-  #   profiles: ["build"]
-  #   build:
-  #     context: .  
-  #     dockerfile: extract/Dockerfile
-  #   image: extraction  # Menggunakan image yang sama dengan extract_yfinance dan extract_idx
-  #   container_name: extract_iqplus
-  #   volumes:
-  #     - ./output:/app/output
-  #   environment:
-  #     IQPLUS_OUTPUT_PATH: /app/output/iqplus_output.json
-  #   command: ["python", "iqplus_extract.py"]  # Menjalankan iqplus_extract.py
+  extract_iqplus:
+    profiles: ["build"]
+    build:
+      context: .
+      dockerfile: extract/Dockerfile
+    image: extraction
+    container_name: extract_iqplus
+    volumes:
+      - ./output:/app/output
+    environment:
+      IQPLUS_OUTPUT_PATH: /app/output/iqplus_output.json
+    command: >
+      sh -c "python iqplus_extract.py --category market --output /app/output/ --pages 2"
+      
+  transform_idx:
+    build:
+      context: ./transform  # The directory containing your transform code
+    image: transformer
+    container_name: transform_service
+    volumes:
+      - ./output:/app/output  # Mount the output directory for saving results
+      - ./output/idx_extracted:/app/extract/idx_extracted  # Mount the extracted data folder from output
+    command: ["python", "idx_transform.py"]  # Command to run your transform script
+    # depends_on:
+    #   - extract_idx  # Ensure the extract_idx service is completed first
 
   transform_idx:
     build:
@@ -176,16 +189,31 @@ services:
     # depends_on:
     #   - extract_idx  # Ensure the extract_idx service is completed first
 
-  load_yfinance: #ini udh aman
+  load_yfinance:
     profiles: ["build"]
     build:
       context: ./load
       dockerfile: Dockerfile
     image: loader
     container_name: load_yfinance
+    environment:
+      - TASK=yfinance  # This will run the yfinance_load.py script
     volumes:
       - ./output:/app/output
     command: ["python", "yfinance_load.py"]
+
+  load_idx:
+    profiles: ["build"]
+    build:
+      context: ./load
+      dockerfile: Dockerfile
+    image: loader
+    container_name: load_idx
+    environment:
+      - TASK=idx  # This will run the idx_load.py script
+    volumes:
+      - ./output:/app/output
+    command: ["python", "idx_load.py"]
 
 volumes:
   postgres-db:   

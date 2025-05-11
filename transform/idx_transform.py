@@ -3,6 +3,7 @@ from pyspark import RDD
 import xmltodict
 import json
 import os
+import shutil
 
 # Initialize Spark session
 spark = SparkSession.builder \
@@ -121,7 +122,7 @@ def process_xbrl_file(file_path):
 processed_data = rdd.map(process_xbrl_file).filter(lambda x: x is not None).collect()
 
 # Save the results to a JSON file
-json_output_file = "/app/output/combined_data.json"
+json_output_file = "/app/output/idx_output.json"
 with open(json_output_file, 'w', encoding='utf-8') as json_file:
     json.dump(processed_data, json_file, indent=4, ensure_ascii=False)
 
@@ -129,3 +130,26 @@ print(f"All data extracted and saved to {json_output_file}")
 
 # Stop the Spark session
 spark.stop()
+
+# Function to delete all files and subdirectories but keep the folder
+def clear_folder(folder_path):
+    try:
+        # Iterate over all files and subdirectories in the folder
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+            
+            # If it's a directory, delete it recursively
+            if os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+            else:
+                # If it's a file, delete it
+                os.remove(file_path)
+        print(f"Folder {folder_path} has been cleared.")
+    except Exception as e:
+        print(f"Error clearing folder {folder_path}: {e}")
+
+# Example usage: clear the idx_zip and idx_extracted folders after processing
+# clear_folder("/app/output/idx_zip")
+# clear_folder("/app/output/idx_extracted")
+
+print("Folders cleared but folder structure remains.")

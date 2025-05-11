@@ -4,16 +4,19 @@ FROM python:3.9-slim
 WORKDIR /app/load
 
 # Copy requirements file and install dependencies
-COPY requirements.txt .
+COPY requirements.txt . 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY yfinance_load.py .
+# Copy load scripts
+COPY yfinance_load.py . 
+COPY idx_load.py . 
 
 # Set environment variables (can be overridden at runtime)
-ENV YFINANCE_INPUT_PATH=../output/yfinance_output.json
+ENV YFINANCE_INPUT_PATH=/app/output/yfinance_output.json
+ENV IDX_INPUT_PATH=/app/output/idx_output.json
 ENV MONGO_URI="mongodb+srv://coffeelatte:secretdata3@luna.sryzase.mongodb.net/"
 ENV MONGO_DB="bigdata_saham"
-ENV MONGO_COLLECTION="yfinance_data_testt"
+ENV MONGO_COLLECTION="yfinance_data_test"
 
-# Run the script when the container launches
-CMD ["python", "yfinance_load.py"]
+# Run the script based on the TASK environment variable
+CMD ["sh", "-c", "if [ \"$TASK\" = \"idx\" ]; then python idx_load.py; else python yfinance_load.py; fi"]
