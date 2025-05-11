@@ -1,13 +1,5 @@
 FROM python:3.9-slim
 
-# Install dependencies untuk wget dan repository yang diperlukan
-RUN apt-get update && apt-get install -y \
-    wget \
-    ca-certificates \
-    lsb-release \
-    gnupg \
-    && apt-get clean
-
 # Install OpenJDK 17 (yang tersedia di Debian Bookworm)
 RUN apt-get update && apt-get install -y openjdk-17-jre-headless && \
     apt-get clean

@@ -3,71 +3,40 @@ from flask_cors import CORS
 from pymongo import MongoClient
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, to_date, date_format, avg
+from pyspark.sql.types import StructType, StructField, StringType, DoubleType
 import os
 
-# === Inisialisasi Flask ===
+# === Konfigurasi ===
 app = Flask(__name__)
 CORS(app)
-
-# === Koneksi MongoDB Atlas ===
 client = MongoClient("mongodb+srv://coffeelatte:secretdata3@luna.sryzase.mongodb.net/")
 db = client["bigdata_saham"]
 collection = db["yfinance_data"]
+# os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
 
-# === Set JAVA_HOME untuk Spark ===
-os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
+spark = SparkSession.builder.appName("SahamApp").config("spark.ui.port", "4050").getOrCreate()
 
-# === Inisialisasi SparkSession ===
-spark = SparkSession.builder \
-    .appName("SahamApp") \
-    .config("spark.ui.port", "4050") \
-    .getOrCreate()
+# === Helper ===
+def safe_float(v): return float(v) if v not in [None, ""] else 0.0
+def safe_int(v): return int(v) if v not in [None, ""] else 0
 
-def safe_float(value):
-    try:
-        return float(value) if value is not None and value != "" else 0.0
-    except (ValueError, TypeError):
-        return 0.0
-
-def safe_int(value):
-    try:
-        return int(value) if value is not None and value != "" else 0
-    except (ValueError, TypeError):
-        return 0
-
-# === Fungsi Load dan Siapkan Data ===
 def load_data(emiten):
-    raw = list(collection.find({
-        "info.symbol": { "$regex": f"^{emiten}$", "$options": "i" }
-    }))
-    if not raw:
-        print("❌ Tidak ada data ditemukan untuk", emiten)
-        return None
+    doc = collection.find_one({ "info.symbol": { "$regex": f"^{emiten}$", "$options": "i" } })
+    if not doc: return None
 
-    doc = raw[0]
-    symbol = doc.get('info', {}).get('symbol', emiten)
-    history = doc.get('history', [])
-    data = []
+    history = doc.get("history", [])
+    data = [{
+        "symbol": doc["info"].get("symbol", emiten),
+        "Date": str(r.get("Date", "")).split("T")[0],
+        "Open": safe_float(r.get("Open")),
+        "High": safe_float(r.get("High")),
+        "Low": safe_float(r.get("Low")),
+        "Close": safe_float(r.get("Close")),
+        "Volume": float(safe_int(r.get("Volume")))
+    } for r in history if r]
 
-    for record in history:
-        try:
-            data.append({
-                "symbol": symbol,
-                "Date": str(record.get("Date", "")).split("T")[0],
-                "Open": safe_float(record.get("Open")),
-                "High": safe_float(record.get("High")),
-                "Low": safe_float(record.get("Low")),
-                "Close": safe_float(record.get("Close")),
-                "Volume": float(safe_int(record.get("Volume")))
-            })
-        except Exception as e:
-            print(f"⚠️ Skip record rusak: {e}")
+    if not data: return None
 
-    if not data:
-        print("❌ Semua record history kosong atau rusak.")
-        return None
-
-    from pyspark.sql.types import StructType, StructField, StringType, DoubleType
     schema = StructType([
         StructField("symbol", StringType(), True),
         StructField("Date", StringType(), True),
@@ -78,70 +47,60 @@ def load_data(emiten):
         StructField("Volume", DoubleType(), True),
     ])
 
-    try:
-        df = spark.createDataFrame(data, schema=schema)
-        df = df.withColumn("Date", to_date("Date"))
-        return df
-    except Exception as e:
-        print("❌ Gagal membuat Spark DataFrame:", e)
-        return None
+    df = spark.createDataFrame(data, schema=schema)
+    return df.withColumn("Date", to_date("Date"))
 
 # === Endpoint: Daftar Emiten ===
 @app.route("/api/emiten")
 def get_emiten():
-    symbols = collection.distinct("info.symbol")
-    return jsonify(symbols)
+    return jsonify(collection.distinct("info.symbol"))
 
 # === Endpoint: Harga Saham Berdasarkan Periode ===
 @app.route("/api/harga")
 def get_harga():
     emiten = request.args.get("emiten")
     period = request.args.get("period", "daily")
-
-    if not emiten:
-        return jsonify({"error": "Parameter 'emiten' wajib diisi"}), 400
-
-    if period not in ["daily", "monthly", "yearly"]:
-        return jsonify({"error": "Parameter 'period' harus daily/monthly/yearly"}), 400
+    if not emiten or period not in ["daily", "monthly", "yearly"]:
+        return jsonify({"error": "Parameter tidak valid"}), 400
 
     df = load_data(emiten)
-    if df is None or df.count() == 0:
-        return jsonify({"error": "Data tidak ditemukan atau kosong"}), 404
+    if not df or df.count() == 0:
+        return jsonify({"error": "Data tidak ditemukan"}), 404
 
-    try:
-        if period == "monthly":
-            df = df.withColumn("period", date_format("Date", "yyyy-MM"))
-        elif period == "yearly":
-            df = df.withColumn("period", date_format("Date", "yyyy"))
-        else:
-            df = df.withColumn("period", col("Date"))
+    fmt = {"daily": "Date", "monthly": "yyyy-MM", "yearly": "yyyy"}
+    df = df.withColumn("period", df["Date"] if period == "daily" else date_format("Date", fmt[period]))
 
-        agg_df = df.groupBy("period").agg(
-            avg("Open").alias("Open"),
-            avg("High").alias("High"),
-            avg("Low").alias("Low"),
-            avg("Close").alias("Close"),
-            avg("Volume").alias("Volume")
-        ).orderBy("period")
+    agg = df.groupBy("period").agg(
+        avg("Open").alias("Open"),
+        avg("High").alias("High"),
+        avg("Low").alias("Low"),
+        avg("Close").alias("Close"),
+        avg("Volume").alias("Volume")
+    ).orderBy("period")
 
-        result = []
-        for row in agg_df.collect():
-            if row["Open"] is not None:
-                result.append({
-                    "Symbol": emiten.upper(),
-                    "Date": str(row["period"]),
-                    "Open": round(row["Open"], 2),
-                    "High": round(row["High"], 2),
-                    "Low": round(row["Low"], 2),
-                    "Close": round(row["Close"], 2),
-                    "Volume": int(row["Volume"]) if row["Volume"] is not None else 0
-                })
+    return jsonify([{
+        "Symbol": emiten.upper(),
+        "Date": str(r["period"]),
+        "Open": round(r["Open"], 2),
+        "High": round(r["High"], 2),
+        "Low": round(r["Low"], 2),
+        "Close": round(r["Close"], 2),
+        "Volume": int(r["Volume"] or 0)
+    } for r in agg.collect() if r["Open"] is not None])
 
-        return jsonify(result)
+# === Endpoint: Data Keuangan IDX ===
+@app.route("/api/idx/finance")
+def get_idx_financials():
+    entity_code = request.args.get("entity_code")
+    if not entity_code:
+        return jsonify({"error": "Parameter 'entity_code' wajib diisi"}), 400
 
-    except Exception as e:
-        print("❌ Gagal proses agregasi:", e)
-        return jsonify({"error": "Terjadi error saat agregasi data"}), 500
-    
+    data = db["idx_data"].find_one({"EntityCode": entity_code})
+    if not data:
+        return jsonify({"error": f"Tidak ditemukan data untuk '{entity_code}'"}), 404
+
+    data.pop("_id", None)
+    return jsonify(data)
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000)
