@@ -164,8 +164,7 @@ services:
       IQPLUS_OUTPUT_PATH: /app/output/iqplus_output.json
     command: >
       sh -c "python iqplus_extract.py --category market --output /app/output/ --pages 2"
-
-
+      
   transform_idx:
     build:
       context: ./transform  # The directory containing your transform code
