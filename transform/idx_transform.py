@@ -79,6 +79,12 @@ def extract_financials(xbrl_dict):
         if isinstance(entity_code_outside_context, dict) and '#text' in entity_code_outside_context:
             result["EntityCode"] = entity_code_outside_context['#text']
 
+    currency_type_outside_context = xbrl_dict.get('xbrl', {}).get('idx-dei:DescriptionOfPresentationCurrency', None)
+    if currency_type_outside_context:
+        # If idx-dei:DescriptionOfPresentationCurrency is found, extract the currency
+        if isinstance(currency_type_outside_context, dict) and '#text' in currency_type_outside_context:
+            result["CurrencyType"] = currency_type_outside_context['#text']
+
     return result
 
 # Path to the extracted folder where the XBRL files are stored
@@ -143,7 +149,7 @@ def clear_folder(folder_path):
     except Exception as e:
         print(f"Error clearing folder {folder_path}: {e}")
 
-clear_folder("/app/output/idx_zip")
-clear_folder("/app/output/idx_extracted")
+# clear_folder("/app/output/idx_zip")
+# clear_folder("/app/output/idx_extracted")
 
 print("Folders cleared but folder structure remains.")
