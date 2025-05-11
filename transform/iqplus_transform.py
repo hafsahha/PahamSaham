@@ -3,15 +3,22 @@ import os
 import requests
 from datetime import datetime
 # import openai
+from openai import OpenAI
 import re
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Initialize LLM client
 # clientAI = OpenAI(base_url="http://192.168.0.203:1234/v1", api_key="gemma-3-4b-it")
 
-from openai import OpenAI
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key="YOURSECRETKEY"
+    api_key="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"
 )
 
 # Cache for emiten data
@@ -27,15 +34,15 @@ def fetch_emiten_data():
                 if isinstance(tickers, list):
                     # Create cache with ticker as both key and value since we don't have names
                     emiten_cache = {ticker: ticker for ticker in tickers if isinstance(ticker, str)}
-                    print(f"✅ Fetched {len(emiten_cache)} emiten tickers from API")
+                    logger.info(f"✅ Fetched {len(emiten_cache)} emiten tickers from API")
                 else:
-                    print("⚠️ API did not return a list of tickers")
+                    logger.info("⚠️ API did not return a list of tickers")
             except ValueError:
-                print("⚠️ Invalid JSON response from API")
+                logger.info("⚠️ Invalid JSON response from API")
         else:
-            print(f"⚠️ API returned status {response.status_code}")
+            logger.info(f"⚠️ API returned status {response.status_code}")
     except requests.exceptions.RequestException as e:
-        print(f"⚠️ Failed to fetch emiten data: {e}")
+        logger.info(f"⚠️ Failed to fetch emiten data: {e}")
 
 def get_emiten_name(ticker):
     """Get company name - since we only have tickers, return formatted ticker"""
@@ -81,7 +88,7 @@ def summarize_news(text):
     
     fin = res.split("</think>")#[-1].strip()
     fin [-1]=fin [-1].replace(" (50 kata)", "")
-    print(fin[-1])
+    # logger.info(fin[-1])
     return fin[-1].strip()
     # return "placeholder"
         
@@ -102,7 +109,7 @@ def analyze_sentiment(text):
     res = response.choices[0].message.content
     
     fin = res.split("</think>")#[-1].strip()
-    print(fin[-1])
+    logger.info(fin[-1])
     return fin[-1].strip()
 
 def initialize_json_file(output_path):
@@ -123,10 +130,10 @@ def save_article(output_path, article_data):
             try:
                 data = json.load(f)
                 if not isinstance(data, list):
-                    print("⚠️ Existing file is not a JSON array. Reinitializing...")
+                    logger.info("⚠️ Existing file is not a JSON array. Reinitializing...")
                     data = []
             except json.JSONDecodeError:
-                print("⚠️ Invalid JSON in file. Reinitializing...")
+                logger.info("⚠️ Invalid JSON in file. Reinitializing...")
                 data = []
         
         # Append new article
@@ -138,15 +145,15 @@ def save_article(output_path, article_data):
         
         return True
     except Exception as e:
-        print(f"⚠️ Failed to save article: {e}")
+        logger.info(f"⚠️ Failed to save article: {e}")
         return False
 
 def get_emiten_name(url):
-    # print("Fetching emiten name from URL...")
+    # logger.info("Fetching emiten name from URL...")
     tmp = url.split("/")
     tmp = tmp[-1].split("-")
-    # print(tmp)
-    # print(tmp[0].upper())
+    # logger.info(tmp)
+    # logger.info(tmp[0].upper())
     return tmp[0].upper()
 
 
@@ -175,9 +182,9 @@ def process_article(article, category, output_path):
         processed_data['sentimen'] = analyze_sentiment(article['text'])
     
     if save_article(output_path, processed_data):
-        print(f"✅ Processed and saved: {title[:50]}...")
+        logger.info(f"✅ Processed and saved: {title[:50]}...")
     else:
-        print(f"❌ Failed to process: {title[:50]}...")
+        logger.info(f"❌ Failed to process: {title[:50]}...")
     
     return processed_data
 
@@ -201,13 +208,13 @@ def process_json_file(input_path, output_path, category):
             data = json.load(f)
         
         for i, article in enumerate(data, 1):
-            print(f"Processing article {i}/{len(data)}")
+            logger.info(f"Processing article {i}/{len(data)}")
             process_article(article, category, output_path)
         
-        print(f"\n✔️ Completed processing {len(data)} articles")
-        print(f"📁 Output saved to {output_path}")
+        logger.info(f"\n✔️ Completed processing {len(data)} articles")
+        logger.info(f"📁 Output saved to {output_path}")
     except Exception as e:
-        print(f"❌ Error processing file: {e}")
+        logger.info(f"❌ Error processing file: {e}")
 
 def main(category, date=None):
     """Main workflow"""
@@ -237,10 +244,10 @@ def main(category, date=None):
 
     
     if os.path.exists(input_path):
-        print(f"🔧 Processing {input_file}...")
+        logger.info(f"🔧 Processing {input_file}...")
         process_json_file(input_path, output_path, category)
     else:
-        print(f"❌ File not found: {input_path}")
+        logger.info(f"❌ File not found: {input_path}")
 
 if __name__ == "__main__":
     import argparse
