@@ -44,6 +44,7 @@ import StockComparison from "@/components/stock-comparison"
 import PortfolioAnalytics from "@/components/portfolio-analytics"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { StockFinancials } from "@/components/stock-finance"
+import { FinancialChartCard } from "@/components/financial-chart"
 
 // Interface untuk tipe data dari API
 interface Emiten {
@@ -595,7 +596,11 @@ export default function Dashboard() {
                 </div>       
                          
                 {/* Komponen Data Keuangan Baru */}
-                <StockFinancials financialData={financialData} />           
+                <div className="grid grid-cols-[1fr_2fr] gap-4">
+                  <StockFinancials financialData={financialData} />
+                  <FinancialChartCard financialData={financialData} />
+                </div>
+
 
                 <StockNews />
               </TabsContent>
