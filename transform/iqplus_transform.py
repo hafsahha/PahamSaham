@@ -185,15 +185,20 @@ def process_article(article, category, output_path):
     
     if 'text' in article and article['text'].strip():
         logger.info("Generating summary...")
+
+        # =========== INI KALO PAKE LLM DI LOKAL LAMA NYA MINTA AMPUN, jadi gini aja gapapa
+
         # processed_data['summary'] = summarize_news(article['text'])
         # logger.info("Generating sentiment...")
         # processed_data['sentimen'] = analyze_sentiment(article['text'])
         
-        # for test
+        # for realcase (generate summary n sentiment), uncomment 3 lines above, n delete/comment the 3 others below
 
-        processed_data['summary'] = "testttttt"
+        processed_data['summary'] = "summary nya disini ntar"
         logger.info("Generating sentiment...")
-        processed_data['sentimen'] = "cihuy"
+        processed_data['sentimen'] = "hasilnya bakal positif/netral/negatif"
+
+        # ===========
 
         logger.info("Summary and sentiment generated.")
     
