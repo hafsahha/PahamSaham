@@ -405,9 +405,9 @@ export default function Dashboard() {
                 className="gap-2 rounded-full border-secondary/30 bg-white/80 dark:bg-background/80 hover:bg-accent/10 hover:text-accent"
               >
                 <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium dark:bg-primary/10">
-                  JD
+                  GS
                 </div>
-                <span className="hidden md:inline-flex">John Doe</span>
+                <span className="hidden md:inline-flex">Gojo Satoru</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
