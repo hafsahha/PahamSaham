@@ -44,7 +44,7 @@ const formatCurrencyShort = (value: number) => {
   if (value >= 1000000000000) {
     return `Rp${(value / 1000000000000).toFixed(1)}T`
   }
-  if (value >= 1000000000) {
+  if (value >= 100000000) {
     return `Rp${(value / 1000000000).toFixed(1)}M`
   }
   return `Rp${value}`
