@@ -1,5 +1,12 @@
 # ETL Saham Pipeline with Airflow & Docker
+## Anggota
+- Mochamad Zidan Rusdhiana (2305464)
+- Muhammad Daffa Ma'arif (2305771)
+- Yusrilia Hidayanti (2306828)
+- Ismail Fatih Raihan (2307840)
+- Hafsah Hamidah (2311474)
 
+## Deskripsi
 Proyek ini merupakan pipeline ETL (Extract, Transform, Load) data saham yang dibangun menggunakan **Apache Airflow**, **Docker**, dan **Python**. Tujuannya adalah untuk mengotomatisasi proses pengambilan, transformasi, dan pemuatan data saham ke dalam database MongoDB agar dapat diakses oleh aplikasi analisis dan visualisasi data.
 
 Setiap komponen ETL (extract, transform, load) dipisahkan dalam container Docker agar modular, efisien, dan mudah diorkestrasi melalui DAG pada Airflow.
@@ -76,6 +83,8 @@ Pipeline ETL didefinisikan dalam folder `airflow/dags`. Tiga DAG utama adalah:
 | `iqplus_pipeline`   | Menjalankan iqplus extract → transform → load |
 
 Setiap task DAG berjalan di container terpisah agar proses lebih efisien dan terisolasi.
+Berikut adalah tampilan Airflow:
+![](airflow.png)
 
 ---
 
@@ -103,6 +112,12 @@ API akan menyajikan data yang sudah dimuat ke MongoDB. Contoh endpoint:
 ```
 GET /api/harga?/emiten={nama emiten}&period{daily/monthly/yearly}
 GET /api/emiten
+GET /api/idx/finance?entity_code=<emiten_code>
+GET /api/idx/
+GET /api/iqplus/
+GET /api/iqplus/recent?hours=<hour>
+GET /api/iqplus/emiten/<emiten_code>
+
 ```
 
 ---
@@ -164,6 +179,6 @@ http://localhost:3000
 
 ##  Output
 
-Data hasil extract dan transform disimpan di folder `output/`, lalu dimuat ke MongoDB oleh container `load`. Format file umumnya JSON, khusus untuk data hasil scrapping IDX XBRL.
+Data hasil extract dan transform disimpan di folder `output/`, lalu dimuat ke MongoDB oleh container `load`. Format file umumnya JSON, untuk data hasil scrapping IDX XBRL dan IQPlus.
 
 ---
