@@ -103,12 +103,21 @@ def get_idx_financials():
     if not entity_code:
         return jsonify({"error": "Parameter 'entity_code' wajib diisi"}), 400
 
-    data = db["idx_data"].find_one({"EntityCode": entity_code})
-    if not data:    
+    # Ambil semua record yang sesuai dengan entity_code
+    data = db["idx_data"].find({"EntityCode": entity_code})
+
+    # Jika tidak ada data ditemukan, kembalikan error
+    if not data:
         return jsonify({"error": f"Tidak ditemukan data untuk '{entity_code}'"}), 404
 
-    data.pop("_id", None)
-    return jsonify(data)
+    # Convert data MongoDB ke list dan hapus _id
+    result = []
+    for record in data:
+        record.pop("_id", None)
+        result.append(record)
+
+    return jsonify(result)
+
 
 # === Endpoint: Data Berita IQPlus ===
 @app.route('/api/iqplus/')
