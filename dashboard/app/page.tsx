@@ -122,21 +122,25 @@ async function fetchPriceData(emiten: string, period: string): Promise<PriceData
   }
 }
 
-
 async function fetchFinancialData(entityCode: string): Promise<FinancialData[]> {
   try {
     const apiUrl = `http://localhost:5000/api/idx/finance?entity_code=${entityCode}`
     const res = await fetch(apiUrl)
     if (!res.ok) throw new Error("Failed to fetch financial data")
-    
     const data = await res.json()
-    if (!Array.isArray(data)) return [] // Pastikan selalu return array
-    
+    if (!Array.isArray(data)) return []
     return data as FinancialData[]
   } catch (error) {
     console.error("Error fetching financial data:", error)
     return []
   }
+}
+
+// Komponen Skeleton untuk loading
+function Skeleton({ className }: { className?: string }) {
+  return (
+    <div className={`animate-pulse bg-secondary/30 rounded ${className}`} />
+  )
 }
 
 // Komponen untuk baris tabel saham
@@ -159,22 +163,30 @@ function StockRow({ emiten }: { emiten: Emiten }) {
     <TableRow className="hover:bg-secondary/5">
       <TableCell className="font-medium">{emiten.ticker}</TableCell>
       <TableCell>{emiten.name}</TableCell>
-      <TableCell className="text-right">{stockPriceData ? formatCurrency(stockPriceData.price) : "N/A"}</TableCell>
+      <TableCell className="text-right">
+        {stockPriceData ? formatCurrency(stockPriceData.price) : <Skeleton className="h-4 w-16 ml-auto" />}
+      </TableCell>
       <TableCell
         className={`text-right ${stockPriceData && stockPriceData.change >= 0 ? "text-accent" : "text-red-500"}`}
       >
-        {stockPriceData
-          ? (stockPriceData.change >= 0 ? "+" : "-") + formatCurrency(Math.abs(stockPriceData.change))
-          : "N/A"}
+        {stockPriceData ? (
+          (stockPriceData.change >= 0 ? "+" : "-") + formatCurrency(Math.abs(stockPriceData.change))
+        ) : (
+          <Skeleton className="h-4 w-16 ml-auto" />
+        )}
       </TableCell>
       <TableCell
         className={`text-right ${stockPriceData && stockPriceData.changePercent >= 0 ? "text-accent" : "text-red-500"}`}
       >
-        {stockPriceData
-          ? (stockPriceData.changePercent >= 0 ? "+" : "-") + formatPercentage(Math.abs(stockPriceData.changePercent))
-          : "N/A"}
+        {stockPriceData ? (
+          (stockPriceData.changePercent >= 0 ? "+" : "-") + formatPercentage(Math.abs(stockPriceData.changePercent))
+        ) : (
+          <Skeleton className="h-4 w-16 ml-auto" />
+        )}
       </TableCell>
-      <TableCell className="text-right">{stockPriceData ? formatVolume(stockPriceData.volume) : "N/A"}</TableCell>
+      <TableCell className="text-right">
+        {stockPriceData ? formatVolume(stockPriceData.volume) : <Skeleton className="h-4 w-16 ml-auto" />}
+      </TableCell>
       <TableCell>
         <Button variant="ghost" size="icon" className="hover:bg-accent/10 hover:text-accent">
           <Plus className="h-4 w-4" />
@@ -213,8 +225,8 @@ export default function Dashboard() {
   const [stockData, setStockData] = useState<StockData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  // const [financialData, setFinancialData] = useState<FinancialData | null>(null)
   const [financialData, setFinancialData] = useState<FinancialData[]>([])
+  const [period, setPeriod] = useState<"daily" | "monthly" | "yearly">("yearly")
 
   // Fetch daftar emiten saat komponen dimuat
   useEffect(() => {
@@ -228,27 +240,28 @@ export default function Dashboard() {
     loadInitialEmiten()
   }, [])
 
-  // Fetch data harga saat activeStock berubah
+  // Fetch data harga saat activeStock atau period berubah
   useEffect(() => {
     async function loadPriceData() {
       if (!activeStock) return
-      const data = await fetchPriceData(activeStock, "yearly")
+      setIsLoading(true)
+      const data = await fetchPriceData(activeStock, period)
       setPriceData(data)
       setStockData(calculateStockData(data))
+      setIsLoading(false)
     }
     loadPriceData()
-  }, [activeStock])
+  }, [activeStock, period])
 
   useEffect(() => {
     async function loadFinancialData() {
       if (!activeStock) return
       const entityCode = activeStock.split('.')[0]
       const data = await fetchFinancialData(entityCode)
-      setFinancialData(data || []) // Pastikan selalu array
+      setFinancialData(data || [])
     }
     loadFinancialData()
   }, [activeStock])
-
 
   // Filter emiten berdasarkan pencarian
   const filteredEmiten = initialEmiten.filter(
@@ -278,17 +291,66 @@ export default function Dashboard() {
             </span>
           </div>
           <div className="ml-auto flex items-center gap-4">
-            <span>Loading...</span>
+            <Skeleton className="h-8 w-24 rounded-full" />
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-8 w-32 rounded-full" />
           </div>
         </header>
-        <div className="flex-1 p-4 md:p-6">
-          <div>Loading...</div>
+        <div className="flex flex-1">
+          <aside className="hidden md:block border-r bg-white/80 dark:bg-background/95 backdrop-blur-sm fixed top-16 left-0 w-[240px] h-[calc(100vh-64px)] z-40">
+            <div className="flex flex-col h-full gap-2 p-4">
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-5 w-20 mt-2" />
+              <div className="grid gap-1 flex-1 overflow-y-auto max-h-30">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
+              </div>
+              <Separator className="bg-secondary/30" />
+              <div className="grid gap-1 py-2">
+                {[...Array(7)].map((_, i) => (
+                  <Skeleton key={i} className="h-8 w-full" />
+                ))}
+              </div>
+              <Skeleton className="h-4 w-16 mt-2" />
+            </div>
+          </aside>
+          <main className="flex-1 md:ml-[240px] p-4 md:p-6">
+            <div className="space-y-4">
+              <div className="flex items-center">
+                <div>
+                  <Skeleton className="h-7 w-32" />
+                  <Skeleton className="h-4 w-48 mt-2" />
+                </div>
+                <Skeleton className="ml-auto h-9 w-24" />
+              </div>
+              <div className="flex gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-9 w-20" />
+                ))}
+              </div>
+              <Skeleton className="h-32 w-full" />
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                <div className="lg:col-span-5">
+                  <Skeleton className="h-64 w-full" />
+                </div>
+                <div className="lg:col-span-2">
+                  <Skeleton className="h-64 w-full" />
+                </div>
+              </div>
+              <div className="grid grid-cols-[1fr_2fr] gap-4">
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-48 w-full" />
+              </div>
+              <Skeleton className="h-48 w-full" />
+            </div>
+          </main>
         </div>
       </div>
     )
   }
 
-  // Update the background gradient for better dark mode visibility
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-secondary/50 to-secondary dark:from-background dark:to-background">
       <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-white/80 dark:bg-background/95 backdrop-blur-md px-6 shadow-sm">
@@ -365,47 +427,6 @@ export default function Dashboard() {
       <div className="flex flex-1">
         <aside className="hidden md:block border-r bg-white/80 dark:bg-background/95 backdrop-blur-sm fixed top-16 left-0 w-[240px] h-[calc(100vh-64px)] z-40">
           <div className="flex flex-col h-full gap-2 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Input
-                type="search"
-                placeholder="Cari saham..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-9 border-secondary/30 bg-white/80 focus:border-accent text-sm"
-              />
-            </div>
-
-            <h3 className="mb-2 text-sm font-medium text-primary dark:text-blue/60">Watchlist</h3>
-            <div className="grid gap-1 flex-1 overflow-y-auto max-h-30">
-              <div className="grid gap-1">
-                {filteredEmiten.map((emiten) => (
-                  <Button
-                    key={emiten.ticker}
-                    variant={activeStock === emiten.ticker ? "secondary" : "ghost"}
-                    className={`justify-between h-auto py-2 text-sm ${activeStock === emiten.ticker ? "bg-primary/10 hover:bg-primary/20 text-primary border-none" : "hover:bg-primary/10"}`}
-                    onClick={() => setActiveStock(emiten.ticker)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{emiten.ticker}</span>
-                      <span className="text-xs text-muted-foreground">{emiten.name}</span>
-                    </div>
-                    {stockData && emiten.ticker === activeStock && (
-                      <div
-                        className={`flex items-center gap-1 ${stockData.changePercent >= 0 ? "text-accent" : "text-red-500"}`}
-                      >
-                        {stockData.changePercent >= 0 ? (
-                          <ArrowUp className="h-3 w-3" />
-                        ) : (
-                          <ArrowDown className="h-3 w-3" />
-                        )}
-                        <span className="text-xs">{formatPercentage(Math.abs(stockData.changePercent))}</span>
-                      </div>
-                    )}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <Separator className="bg-secondary/30" />
             <nav className="grid gap-1 py-2">
               <Button
                 variant="ghost"
@@ -478,8 +499,50 @@ export default function Dashboard() {
                 </Link>
               </Button>
             </nav>
+            <Separator className="bg-secondary/30" />
             <div className="flex items-center gap-2 mb-2">
-              <p className="text-sm text-muted-foreground">Big Data</p>
+              <Input
+                type="search"
+                placeholder="Cari saham..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9 border-secondary/30 bg-white/80 focus:border-accent text-sm"
+              />
+            </div>
+
+            <h3 className="mb-2 text-sm font-medium text-primary dark:text-blue/60">Watchlist</h3>
+            <div className="grid gap-1 flex-1 overflow-y-auto max-h-30">
+              <div className="grid gap-1">
+                {filteredEmiten.map((emiten) => (
+                  <Button
+                    key={emiten.ticker}
+                    variant={activeStock === emiten.ticker ? "secondary" : "ghost"}
+                    className={`justify-between h-auto py-2 text-sm ${activeStock === emiten.ticker ? "bg-primary/10 hover:bg-primary/20 text-primary border-none" : "hover:bg-primary/10"}`}
+                    onClick={() => setActiveStock(emiten.ticker)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{emiten.ticker}</span>
+                      <span className="text-xs text-muted-foreground">{emiten.name}</span>
+                    </div>
+                    {stockData && emiten.ticker === activeStock && (
+                      <div
+                        className={`flex items-center gap-1 ${stockData.changePercent >= 0 ? "text-accent" : "text-red-500"}`}
+                      >
+                        {stockData.changePercent >= 0 ? (
+                          <ArrowUp className="h-3 w-3" />
+                        ) : (
+                          <ArrowDown className="h-3 w-3" />
+                        )}
+                        <span className="text-xs">{formatPercentage(Math.abs(stockData.changePercent))}</span>
+                      </div>
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-sm text-muted-foreground">@Big-Data</p>
             </div>
           </div>
         </aside>
@@ -547,12 +610,35 @@ export default function Dashboard() {
                             </div>
                           </div>
                         ) : (
-                          <div>Loading...</div>
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-8 w-24" />
+                            <Skeleton className="h-6 w-32" />
+                          </div>
                         )}
                       </CardDescription>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-sm text-muted-foreground">Periode:</span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="h-8">
+                              {period.charAt(0).toUpperCase() + period.slice(1)}
+                              <ChevronDown className="ml-2 h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuItem onClick={() => setPeriod("daily")}>Daily</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setPeriod("monthly")}>Monthly</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setPeriod("yearly")}>Yearly</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </CardHeader>
                     <CardContent className="pl-2">
-                      <StockChart data={priceData} />
+                      {isLoading ? (
+                        <Skeleton className="h-48 w-full" />
+                      ) : (
+                        <StockChart data={priceData} />
+                      )}
                     </CardContent>
                   </Card>
                   <Card className="lg:col-span-2 bg-white/80 backdrop-blur-sm border-secondary/20 card-hover">
@@ -562,7 +648,6 @@ export default function Dashboard() {
                     <CardContent>
                       {stockData ? (
                         <div className="space-y-4">
-                          {/* Data Harga Saham */}
                           <div className="grid grid-cols-2 gap-2 text-sm">
                             <div className="text-muted-foreground">Open</div>
                             <div className="text-right font-medium">{formatCurrency(stockData.open)}</div>
@@ -589,19 +674,29 @@ export default function Dashboard() {
                           </div>
                         </div>
                       ) : (
-                        <div>Loading...</div>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            {[...Array(5)].map((_, i) => (
+                              <>
+                                <Skeleton key={`label-${i}`} className="h-4 w-12" />
+                                <Skeleton key={`value-${i}`} className="h-4 w-16 ml-auto" />
+                              </>
+                            ))}
+                          </div>
+                          <Separator className="bg-secondary/30" />
+                          <div className="flex justify-between">
+                            <Skeleton className="h-9 w-16" />
+                            <Skeleton className="h-9 w-32" />
+                          </div>
+                        </div>
                       )}
                     </CardContent>
                   </Card>
-                </div>       
-                         
-                {/* Komponen Data Keuangan Baru */}
+                </div>
                 <div className="grid grid-cols-[1fr_2fr] gap-4">
                   <StockFinancials financialData={financialData} />
                   <FinancialChartCard financialData={financialData} />
                 </div>
-
-
                 <StockNews />
               </TabsContent>
               <TabsContent value="stocks" className="space-y-4 slide-up">
@@ -626,8 +721,12 @@ export default function Dashboard() {
                       <TableBody>
                         {initialEmiten.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={7} className="text-center">
-                              Loading saham...
+                            <TableCell colSpan={7}>
+                              <div className="space-y-2">
+                                {[...Array(5)].map((_, i) => (
+                                  <Skeleton key={i} className="h-8 w-full" />
+                                ))}
+                              </div>
                             </TableCell>
                           </TableRow>
                         ) : (
