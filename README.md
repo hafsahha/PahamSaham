@@ -169,12 +169,11 @@ http://localhost:3000
 
 ---
 
-##  Testing dan Validasi
+##  Dokumentasi Web Dashboard
 
-* Pastikan setiap scraper menghasilkan file di `output/`
-* Verifikasi transformasi berjalan tanpa error
-* Pastikan data berhasil masuk ke MongoDB
-* Gunakan Postman atau curl untuk testing endpoint API
+
+https://github.com/user-attachments/assets/9a0549c7-02fa-4c80-b1e5-c130302220a0
+
 
 ---
 
