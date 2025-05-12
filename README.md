@@ -179,6 +179,6 @@ http://localhost:3000
 
 ##  Output
 
-Data hasil extract dan transform disimpan di folder `output/`, lalu dimuat ke MongoDB oleh container `load`. Format file umumnya JSON, untuk data hasil scrapping IDX XBRL dan IQPlus.
+Data hasil extract dan transform disimpan di folder `output/`, lalu dimuat ke MongoDB oleh container `load`. Format file umumnya adalah JSON, namun khusus untuk data hasil scrapping IDX, format file adalah XBRL.
 
 ---
