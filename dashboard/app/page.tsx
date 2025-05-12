@@ -616,11 +616,11 @@ export default function Dashboard() {
                           </div>
                         )}
                       </CardDescription>
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-1 mt-2">
                         <span className="text-sm text-muted-foreground">Periode:</span>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="h-8">
+                            <Button variant="outline" className="h-7">
                               {period.charAt(0).toUpperCase() + period.slice(1)}
                               <ChevronDown className="ml-2 h-4 w-4" />
                             </Button>
