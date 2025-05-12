@@ -241,11 +241,15 @@ def main(category, date=None):
     output_path = os.getenv("OUTPUT_PATH")
     
     if os.path.exists(input_path):
-        process_json_file(input_path, output_path, category)
-        logger.info(f"✅ Successfully processed {input_file}")
-        
-        os.remove(input_path)
-        logger.info(f"🗑️ Deleted input file: {input_file}")
+        logger.info(f"🔧 Processing {input_file}...")
+        try:
+            process_json_file(input_path, output_path, category)
+            logger.info(f"✅ Successfully processed {input_file}")
+            # Delete file only after successful processing
+            os.remove(input_path)
+            logger.info(f"🗑️ Deleted input file: {input_file}")
+        except Exception as e:
+            logger.error(f"❌ Error processing {input_file}: {e}")
     else:
         logger.error(f"❌ File not found: {input_path}")
 
