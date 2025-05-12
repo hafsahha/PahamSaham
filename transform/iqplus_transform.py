@@ -241,8 +241,11 @@ def main(category, date=None):
     output_path = os.getenv("OUTPUT_PATH")
     
     if os.path.exists(input_path):
-        logger.info(f"🔧 Processing {input_file}...")
         process_json_file(input_path, output_path, category)
+        logger.info(f"✅ Successfully processed {input_file}")
+        
+        os.remove(input_path)
+        logger.info(f"🗑️ Deleted input file: {input_file}")
     else:
         logger.error(f"❌ File not found: {input_path}")
 
