@@ -16,6 +16,7 @@ client = MongoClient("mongodb+srv://coffeelatte:secretdata3@luna.sryzase.mongodb
 db = client["bigdata_saham"]
 collection = db["yfinance_data"]
 iqplus_collection = db["iqplus_data"]
+idx_collection = db["idx_data"]
 # os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
 
 spark = SparkSession.builder.appName("SahamApp").config("spark.ui.port", "4050").getOrCreate()
@@ -110,6 +111,20 @@ def get_idx_financials():
     data.pop("_id", None)
     return jsonify(data)
 
+@app.route('/api/idx/')
+def get_all_idx():
+    """Endpoint untuk semua data IDX"""
+    try:
+        news = list(idx_collection.find({}))
+        return jsonify({
+            'status': 'success',
+            'data': parse_json(news),
+            'count': len(news)
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    
+    
 # === Endpoint: Data Berita IQPlus ===
 @app.route('/api/iqplus/')
 def get_all_news():
