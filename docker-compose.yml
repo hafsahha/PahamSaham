@@ -213,9 +213,8 @@ services:
         python iqplus_transform.py --category market &&
         python iqplus_transform.py --category stock
       "
-
-  # LLM buat transform iqplus
-  ollama:
+ 
+  ollama:   # LLM buat transform iqplus
     profiles: ["dev"]
     build:
       context: .
@@ -276,8 +275,10 @@ services:
       INPUT_PATH: /app/output/iqplus_output.json
 
 volumes:
-  postgres-db:   
+  postgres-db:
+    name: postgres_db
   ollama_data:
+    name: ollama_data
 
 networks:
   saham_net:
