@@ -81,11 +81,14 @@ def extract_daily_data():
     """
     start_time_total = time.time()
     
-    # Dictionary to store stock data
-    stock_data = {}
+    # List to store stock data (changed from dictionary to list for direct MongoDB compatibility)
+    stock_data_list = []
     success_list = []
     failed_list = {}
     time_per_stock = {}
+    
+    # Get current date for fetch_date field
+    current_date = datetime.now().strftime('%Y-%m-%d')
     
     logger.info(f"Starting data extraction process at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info(f"Total stocks to process: {len(STOCKS)}")
@@ -101,7 +104,7 @@ def extract_daily_data():
             ticker = yf.Ticker(stock)
             info = ticker.info
             
-            # Get only the last day's data instead of 5 years
+            # Get only the last day's data
             history = ticker.history(period="1d")
             
             # Check if history is empty
@@ -114,15 +117,15 @@ def extract_daily_data():
             history.reset_index(inplace=True)
             history["Date"] = history["Date"].astype(str)  # Convert Timestamp to String
             
-            # Create document for MongoDB
+            # Create document for MongoDB with standardized structure
             stock_doc = {
                 "_id": stock,  # Use stock code as unique ID
                 "symbol": stock,
-                "fetch_date": datetime.now().strftime('%Y-%m-%d'),
+                "update_date": current_date,
                 "info": info,
                 "history": history.to_dict(orient="records")  # List format
             }
-            stock_data[stock] = stock_doc
+            stock_data_list.append(stock_doc)
             
             # Calculate time taken for this stock
             elapsed_time = time.time() - start_time_stock
@@ -167,11 +170,8 @@ def extract_daily_data():
     
     # Save to file
     try:
-        # Convert stock_data dictionary to list format for MongoDB compatibility
-        stock_list = list(stock_data.values())
-        
         with open(OUTPUT_FILE_PATH, 'w', encoding='utf-8') as json_file:
-            json.dump(stock_list, json_file, ensure_ascii=False, indent=4)
+            json.dump(stock_data_list, json_file, ensure_ascii=False, indent=4)
         logger.info(f"\nData saved to {OUTPUT_FILE_PATH}")
     except Exception as e:
         logger.error(f"Failed to save data to file: {str(e)}")
