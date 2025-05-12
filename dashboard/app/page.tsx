@@ -43,6 +43,7 @@ import StockTicker from "@/components/stock-ticker"
 import StockComparison from "@/components/stock-comparison"
 import PortfolioAnalytics from "@/components/portfolio-analytics"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { StockFinancials } from "@/components/stock-finance"
 
 // Interface untuk tipe data dari API
 interface Emiten {
@@ -68,6 +69,26 @@ interface StockData {
   high: number
   low: number
   volume: number
+}
+
+interface FinancialData {
+  Cash: number | null
+  CashFromFinancing: string
+  CashFromInvesting: string
+  CashFromOperating: string
+  CurrencyType: string
+  EndDate: string
+  EntityCode: string
+  EntityName: string
+  GrossProfit: number | null
+  LongTermBorrowing: number | null
+  NetProfit: string
+  OperatingProfit: string
+  Revenue: number | null
+  ShortTermBorrowing: number | null
+  TotalAssets: string
+  TotalEquity: string
+  filename: string
 }
 
 // Fungsi untuk fetch data emiten
@@ -96,6 +117,23 @@ async function fetchPriceData(emiten: string, period: string): Promise<PriceData
     return await res.json()
   } catch (error) {
     console.error(error)
+    return []
+  }
+}
+
+
+async function fetchFinancialData(entityCode: string): Promise<FinancialData[]> {
+  try {
+    const apiUrl = `http://localhost:5000/api/idx/finance?entity_code=${entityCode}`
+    const res = await fetch(apiUrl)
+    if (!res.ok) throw new Error("Failed to fetch financial data")
+    
+    const data = await res.json()
+    if (!Array.isArray(data)) return [] // Pastikan selalu return array
+    
+    return data as FinancialData[]
+  } catch (error) {
+    console.error("Error fetching financial data:", error)
     return []
   }
 }
@@ -174,6 +212,8 @@ export default function Dashboard() {
   const [stockData, setStockData] = useState<StockData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  // const [financialData, setFinancialData] = useState<FinancialData | null>(null)
+  const [financialData, setFinancialData] = useState<FinancialData[]>([])
 
   // Fetch daftar emiten saat komponen dimuat
   useEffect(() => {
@@ -197,6 +237,17 @@ export default function Dashboard() {
     }
     loadPriceData()
   }, [activeStock])
+
+  useEffect(() => {
+    async function loadFinancialData() {
+      if (!activeStock) return
+      const entityCode = activeStock.split('.')[0]
+      const data = await fetchFinancialData(entityCode)
+      setFinancialData(data || []) // Pastikan selalu array
+    }
+    loadFinancialData()
+  }, [activeStock])
+
 
   // Filter emiten berdasarkan pencarian
   const filteredEmiten = initialEmiten.filter(
@@ -510,6 +561,7 @@ export default function Dashboard() {
                     <CardContent>
                       {stockData ? (
                         <div className="space-y-4">
+                          {/* Data Harga Saham */}
                           <div className="grid grid-cols-2 gap-2 text-sm">
                             <div className="text-muted-foreground">Open</div>
                             <div className="text-right font-medium">{formatCurrency(stockData.open)}</div>
@@ -530,7 +582,9 @@ export default function Dashboard() {
                             >
                               Beli
                             </Button>
-                            <Button className="bg-accent hover:bg-accent/90 text-white">Tambah ke Watchlist</Button>
+                            <Button className="bg-accent hover:bg-accent/90 text-white">
+                              Tambah ke Watchlist
+                            </Button>
                           </div>
                         </div>
                       ) : (
@@ -538,7 +592,11 @@ export default function Dashboard() {
                       )}
                     </CardContent>
                   </Card>
-                </div>
+                </div>       
+                         
+                {/* Komponen Data Keuangan Baru */}
+                <StockFinancials financialData={financialData} />           
+
                 <StockNews />
               </TabsContent>
               <TabsContent value="stocks" className="space-y-4 slide-up">
