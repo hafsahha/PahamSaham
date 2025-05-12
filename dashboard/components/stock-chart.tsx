@@ -1,7 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
+import {
+  ComposedChart,
+  Line,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts"
 import { Card } from "@/components/ui/card"
 
 interface PriceData {
@@ -72,14 +82,18 @@ export default function StockChart({ data }: PriceChartProps) {
   // Filter data based on selected range
   const formattedData = filterByRange(sortedData, selectedRange)
 
-  const handleLegendClick = (dataKey: string) => {
-    setActiveDataKey(dataKey)
-  }
-
   // Calculate min and max values for Y axis with some padding
   const allValues = formattedData.flatMap((item) => [item.Open, item.High, item.Low, item.Close])
   const minValue = allValues.length > 0 ? Math.min(...allValues) * 0.95 : 0
   const maxValue = allValues.length > 0 ? Math.max(...allValues) * 1.05 : 100
+  const maxVolume = formattedData.length > 0 ? Math.max(...formattedData.map((item) => item.Volume)) * 1.1 : 1000000
+
+  // Debug: Log data to check volume
+  console.log("Formatted Data:", formattedData)
+
+  const handleLegendClick = (dataKey: string) => {
+    setActiveDataKey(dataKey)
+  }
 
   function filterByRange(data: PriceData[], range: string): PriceData[] {
     if (!data.length || range === "all") return data
@@ -116,11 +130,9 @@ export default function StockChart({ data }: PriceChartProps) {
     }`
   }
 
-  // Update the chart colors and styles for better dark mode visibility
   function getCustomTicks() {
     if (!formattedData.length) return []
 
-    // For option "Semua", only show years
     if (selectedRange === "all") {
       const years = new Set<number>()
       const yearTicks: string[] = []
@@ -142,7 +154,6 @@ export default function StockChart({ data }: PriceChartProps) {
       return yearTicks
     }
 
-    // For option "3 Tahun", show 4 months per year (Jan, Apr, Jul, Oct)
     if (selectedRange === "3y") {
       const quarterTicks: string[] = []
       const targetMonths = [0, 3, 6, 9] // Jan, Apr, Jul, Oct (0-based)
@@ -184,7 +195,6 @@ export default function StockChart({ data }: PriceChartProps) {
       return quarterTicks
     }
 
-    // For option "6 Bulan" and "1 Tahun", show all months
     if (selectedRange === "6mo" || selectedRange === "1y") {
       const monthTicks: string[] = []
       let currentMonth = -1
@@ -205,7 +215,6 @@ export default function StockChart({ data }: PriceChartProps) {
       return monthTicks
     }
 
-    // For option "5 Hari" and "1 Bulan", show all days
     return formattedData.map((item) => item.Date)
   }
 
@@ -278,15 +287,15 @@ export default function StockChart({ data }: PriceChartProps) {
         </button>
       </div>
 
-      <div className="h-[350px]">
+      <div className="h-[450px]">
         {formattedData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
+            <ComposedChart
               data={formattedData}
               margin={{
                 top: 5,
-                right: 5,
-                left: 0, // Reduced from 20 to 10 to minimize left margin
+                right: 0,
+                left: 0,
                 bottom: 5,
               }}
             >
@@ -300,18 +309,7 @@ export default function StockChart({ data }: PriceChartProps) {
                   const month = date.getMonth()
                   const day = date.getDate()
                   const monthNames = [
-                    "Jan",
-                    "Feb",
-                    "Mar",
-                    "Apr",
-                    "Mei",
-                    "Jun",
-                    "Jul",
-                    "Agu",
-                    "Sep",
-                    "Okt",
-                    "Nov",
-                    "Des",
+                    "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
                   ]
 
                   if (selectedRange === "all") {
@@ -326,17 +324,31 @@ export default function StockChart({ data }: PriceChartProps) {
                   return `${day}/${monthNames[month]}/${year.toString().slice(-2)}`
                 }}
                 ticks={customTicks}
-                axisLine={{ stroke: "#e0e0e" }}
+                axisLine={{ stroke: "#e0e0e0" }}
                 padding={{ left: 10, right: 10 }}
                 height={50}
                 angle={selectedRange === "5d" || selectedRange === "1mo" ? -45 : 0}
                 textAnchor={selectedRange === "5d" || selectedRange === "1mo" ? "end" : "middle"}
               />
               <YAxis
+                yAxisId="left"
                 domain={[minValue, maxValue]}
                 tick={{ fontSize: 12 }}
                 tickFormatter={(value) => `${Math.round(value).toLocaleString("id-ID")}`}
-                width={60} // Reduced from 80 to 60 to minimize left space
+                orientation="left"
+                width={60}
+                stroke="#666"
+                label={{ value: "Harga (Rp)", angle: -90, position: "insideLeft", offset: 10, fill: "#666" }}
+              />
+              <YAxis
+                yAxisId="right"
+                domain={[0, maxVolume]}
+                tick={{ fontSize: 12 }}
+                tickFormatter={(value) => `${Math.round(value / 1000000).toLocaleString("id-ID")}M`}
+                orientation="right"
+                width={60}
+                stroke="#666"
+                label={{ value: "Volume", angle: 90, position: "insideRight", offset: 10, fill: "#666" }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend
@@ -352,6 +364,7 @@ export default function StockChart({ data }: PriceChartProps) {
               />
               {activeDataKey === "Open" && (
                 <Line
+                  yAxisId="left"
                   type="monotone"
                   dataKey="Open"
                   stroke="#3b82f6"
@@ -363,6 +376,7 @@ export default function StockChart({ data }: PriceChartProps) {
               )}
               {activeDataKey === "Close" && (
                 <Line
+                  yAxisId="left"
                   type="monotone"
                   dataKey="Close"
                   stroke="#6366f1"
@@ -374,6 +388,7 @@ export default function StockChart({ data }: PriceChartProps) {
               )}
               {activeDataKey === "High" && (
                 <Line
+                  yAxisId="left"
                   type="monotone"
                   dataKey="High"
                   stroke="#10b981"
@@ -385,6 +400,7 @@ export default function StockChart({ data }: PriceChartProps) {
               )}
               {activeDataKey === "Low" && (
                 <Line
+                  yAxisId="left"
                   type="monotone"
                   dataKey="Low"
                   stroke="#ef4444"
@@ -394,7 +410,15 @@ export default function StockChart({ data }: PriceChartProps) {
                   name="Low"
                 />
               )}
-            </LineChart>
+              <Bar
+                yAxisId="right"
+                dataKey="Volume"
+                fill="#6ee7b7"
+                barSize={200}
+                name="Volume"
+                opacity={0.3}
+              />
+            </ComposedChart>
           </ResponsiveContainer>
         ) : (
           <div className="h-full flex items-center justify-center text-muted-foreground">
