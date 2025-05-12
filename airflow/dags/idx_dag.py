@@ -7,7 +7,7 @@ from datetime import datetime
 
 # set path disinii
 used_path = '/app/output/idx_data.json'
-mongo_coll = 'idx_airflow'
+mongo_coll = 'idx_data'
 
 # Mendapatkan path host yang benar dari mount container saat ini
 client = docker.from_env()

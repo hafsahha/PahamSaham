@@ -7,7 +7,7 @@ from datetime import datetime
 
 # path yang dipake buat output transform sama input buat loadernya
 used_path = '/app/output/iqplus_data.json'
-mongo_coll = 'iqplus_airflow'
+mongo_coll = 'iqplus_data'
 
 # Mendapatkan path host yang benar dari mount container saat ini
 client = docker.from_env()
@@ -47,7 +47,7 @@ with DAG(
         mounts=[
             Mount(source=host_output_path, target='/app/output', type='bind')
         ],
-        command="python iqplus_extract.py --category market --count 1",
+        command="python iqplus_extract.py --category market",
         container_name="pipeline_extract_iqplus_market",
         environment={
             'IQPLUS_OUTPUT_PATH': '/app/output/'
@@ -65,7 +65,7 @@ with DAG(
         mounts=[
             Mount(source=host_output_path, target='/app/output', type='bind')
         ],
-        command="python iqplus_extract.py --category stock --count 1",
+        command="python iqplus_extract.py --category stock",
         container_name="pipeline_extract_iqplus_stock",
         environment={
             'IQPLUS_OUTPUT_PATH': '/app/output/'
