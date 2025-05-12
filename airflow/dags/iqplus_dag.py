@@ -6,7 +6,7 @@ from docker.types import Mount
 from datetime import datetime
 
 # path yang dipake buat output transform sama input buat loadernya
-used_path = '/app/output/iqplus_test_airflow.json'
+used_path = '/app/output/iqplus_data.json'
 mongo_coll = 'iqplus_airflow'
 
 # Mendapatkan path host yang benar dari mount container saat ini

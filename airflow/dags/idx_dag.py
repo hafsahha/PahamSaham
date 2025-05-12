@@ -6,7 +6,7 @@ from docker.types import Mount
 from datetime import datetime
 
 # set path disinii
-used_path = '/app/output/idx_test_airflow.json'
+used_path = '/app/output/idx_data.json'
 mongo_coll = 'idx_airflow'
 
 # Mendapatkan path host yang benar dari mount container saat ini

@@ -6,8 +6,8 @@ from docker.types import Mount
 from datetime import datetime
 
 # set dsini yh ...
-used_path = '/app/output/yfinance_test_airflow.json'
-mongo_coll = 'yfinance_airflow'
+used_path = '/app/output/yfinance_data.json'
+mongo_coll = 'yfinance_data'
 
 # Mendapatkan path host yang benar dari mount container saat ini
 client = docker.from_env()
