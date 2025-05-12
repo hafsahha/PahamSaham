@@ -87,6 +87,7 @@ def load_to_mongodb(input_file_path=INPUT_FILE_PATH, mongo_collection=DEFAULT_CO
     client.close()
     logger.info("MongoDB connection closed")
     os.remove(input_file_path)
+    logger.info(f"🗑️ Deleted input file: {input_file_path}")
 
     return {
         "status": "success" if error_count == 0 else "partial_success" if error_count < len(data_list) else "failure",
