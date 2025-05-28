@@ -61,9 +61,9 @@ Hasil scraping disimpan dalam format JSON/CSV di dalam folder `output/` sebagai 
 
 Transformasi dilakukan untuk data `idx` dan `iqplus`, meliputi:
 
-* Pembersihan data duplikat atau null
 * Normalisasi format tanggal
 * Konversi ke struktur yang seragam
+* Rangkuman dan sentimen untuk berita iqplus
 
 Hasil transformasi juga disimpan kembali ke `output/`.
 
