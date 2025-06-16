@@ -661,17 +661,6 @@ export default function Dashboard() {
                             <div className="text-right font-medium">{formatVolume(stockData.volume)}</div>
                           </div>
                           <Separator className="bg-secondary/30" />
-                          <div className="flex justify-between">
-                            <Button
-                              variant="outline"
-                              className="border-secondary/30 bg-white hover:bg-primary/10 hover:text-primary hover:border-primary/50 dark:hover:border-secondary/30 dark:hover:bg-primary/30 dark:hover:text-blue-100 dark:bg-card dark:text-blue-100 dark:border-card/50"
-                            >
-                              Beli
-                            </Button>
-                            <Button className="bg-accent hover:bg-accent/90 text-white">
-                              Tambah ke Watchlist
-                            </Button>
-                          </div>
                         </div>
                       ) : (
                         <div className="space-y-4">
