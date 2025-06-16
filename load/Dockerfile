@@ -12,7 +12,7 @@ COPY loader.py .
 COPY yfinance_loader.py .
 
 # Set environment variables
-ENV MONGO_URI="mongodb+srv://coffeelatte:secretdata3@luna.sryzase.mongodb.net/"
+ENV MONGO_URI="mongodb+srv://big3:daffzidliahafmail@dontsteal.3huq1f6.mongodb.net/"
 ENV MONGO_DB="bigdata_saham"
 
 # Run the script

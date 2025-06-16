@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 # === Konfigurasi ===
 app = Flask(__name__)
 CORS(app)
-client = MongoClient("mongodb+srv://coffeelatte:secretdata3@luna.sryzase.mongodb.net/")
+client = MongoClient("mongodb+srv://big3:daffzidliahafmail@dontsteal.3huq1f6.mongodb.net/")
 db = client["bigdata_saham"]
 collection = db["yfinance_data"]
 iqplus_collection = db["iqplus_data"]
