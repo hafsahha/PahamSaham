@@ -1,28 +1,66 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { ArrowDown, ArrowUp } from "lucide-react"
 
 export default function StockTicker() {
-  const [duplicated, setDuplicated] = useState(false)
+  const [tickerItems, setTickerItems] = useState([]);
+  const [duplicated, setDuplicated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Duplicate items after component mounts to ensure smooth infinite scroll
-    setDuplicated(true)
-  }, [])
+    // Fungsi untuk mengambil daftar emiten
+    const fetchAllEmiten = async () => {
+      try {
+        // Ambil semua emiten dari API /api/emiten
+        const emitenResponse = await fetch("http://localhost:5000/api/emiten");
+        if (!emitenResponse.ok) {
+          throw new Error("Failed to fetch emitens");
+        }
+        const emitenList = await emitenResponse.json();
 
-  const tickerItems = [
-    { symbol: "BBCA", price: "9.250", change: "+2,4%", isPositive: true },
-    { symbol: "BBRI", price: "5.175", change: "+1,2%", isPositive: true },
-    { symbol: "TLKM", price: "3.850", change: "-0,8%", isPositive: false },
-    { symbol: "ASII", price: "4.680", change: "+3,1%", isPositive: true },
-    { symbol: "UNVR", price: "3.750", change: "-1,4%", isPositive: false },
-    { symbol: "BMRI", price: "6.125", change: "+0,8%", isPositive: true },
-    { symbol: "PGAS", price: "1.450", change: "+1,7%", isPositive: true },
-    { symbol: "ANTM", price: "2.350", change: "+4,2%", isPositive: true },
-    { symbol: "INDF", price: "6.750", change: "-0,4%", isPositive: false },
-    { symbol: "ICBP", price: "9.875", change: "+0,6%", isPositive: true },
-  ]
+        // Ambil harga saham untuk setiap emiten
+        const pricePromises = emitenList.map(async (emiten: string) => {
+          const priceResponse = await fetch(`http://localhost:5000/api/harga?emiten=${emiten}&period=daily`);
+          if (!priceResponse.ok) {
+            throw new Error(`Failed to fetch price for ${emiten}`);
+          }
+          const priceData = await priceResponse.json();
+
+          // Ambil data harga saham untuk emiten dan hitung perubahan harga
+          const latestPrice = priceData[priceData.length - 1]; // Ambil harga terakhir
+          return {
+            symbol: latestPrice.Symbol,
+            price: latestPrice.Close.toFixed(2),  // Harga penutupan
+            change: `${((latestPrice.Close - latestPrice.Open) / latestPrice.Open * 100).toFixed(2)}%`,
+            isPositive: latestPrice.Close > latestPrice.Open
+          };
+        });
+
+        // Menunggu semua data harga saham selesai
+        const allPriceData = await Promise.all(pricePromises);
+
+        // Set data ticker dengan data harga yang sudah lengkap
+        setTickerItems(allPriceData);
+        setDuplicated(true);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllEmiten();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <div className="hidden md:block flex-1 overflow-hidden bg-white/50 dark:bg-background/50 backdrop-blur-sm border-x border-secondary/20">
@@ -52,5 +90,5 @@ export default function StockTicker() {
         </div>
       </div>
     </div>
-  )
+  );
 }
