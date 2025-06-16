@@ -42,6 +42,7 @@ import StockNews from "@/components/stock-news"
 import StockTicker from "@/components/stock-ticker"
 import StockComparison from "@/components/stock-comparison"
 import PortfolioAnalytics from "@/components/portfolio-analytics"
+import TopStocks from "@/components/top-stocks"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { StockFinancials } from "@/components/stock-finance"
 import { FinancialChartCard } from "@/components/financial-chart"
@@ -352,8 +353,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-secondary/50 to-secondary dark:from-background dark:to-background">
-      <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-white/80 dark:bg-background/95 backdrop-blur-md px-6 shadow-sm">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-secondary/50 to-secondary dark:from-background dark:to-background">      <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-white/80 dark:bg-background/95 backdrop-blur-md px-6 shadow-sm">
         <Button variant="ghost" size="icon" className="md:hidden">
           <Menu className="h-5 w-5" />
           <span className="sr-only">Toggle menu</span>
@@ -368,74 +368,20 @@ export default function Dashboard() {
         </div>
         <StockTicker />
         <div className="ml-auto flex items-center gap-4">
-          <form className="hidden md:block">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Cari saham..."
-                className="w-64 pl-8 border-secondary/30 bg-white/80 dark:bg-background/80 focus:border-accent"
-              />
-            </div>
-          </form>
-          <Button
-            variant="outline"
-            size="icon"
-            className="rounded-full border-secondary/30 bg-white/80 dark:bg-background/80 hover:bg-accent/10 hover:text-accent relative"
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] text-white">
-              3
-            </span>
-            <span className="sr-only">Notifikasi</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="rounded-full border-secondary/30 bg-white/80 dark:bg-background/80 hover:bg-accent/10 hover:text-accent"
-          >
-            <Settings className="h-5 w-5" />
-            <span className="sr-only">Pengaturan</span>
-          </Button>
           <ThemeToggle />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="gap-2 rounded-full border-secondary/30 bg-white/80 dark:bg-background/80 hover:bg-accent/10 hover:text-accent"
-              >
-                <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium dark:bg-primary/10">
-                  GS
-                </div>
-                <span className="hidden md:inline-flex">Gojo Satoru</span>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Akun Saya</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Profil</DropdownMenuItem>
-              <DropdownMenuItem>Pengaturan</DropdownMenuItem>
-              <DropdownMenuItem>Langganan</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Keluar</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </header>
 
-      <div className="flex flex-1">
-        <aside className="hidden md:block border-r bg-white/80 dark:bg-background/95 backdrop-blur-sm fixed top-16 left-0 w-[240px] h-[calc(100vh-64px)] z-40">
-          <div className="flex flex-col h-full gap-2 p-4">
-            <nav className="grid gap-1 py-2">
+      <div className="flex flex-1">        <aside className="hidden md:block border-r bg-white/80 dark:bg-background/95 backdrop-blur-sm fixed top-16 left-0 w-[240px] h-[calc(100vh-64px)] z-40">
+          <div className="flex flex-col h-full gap-2 p-4">            <nav className="grid gap-1 py-2">
               <Button
                 variant="ghost"
                 className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
                 asChild
               >
                 <Link href="#">
-                  <TrendingUp className="h-4 w-4" />
-                  Ringkasan Pasar
+                  <LineChart className="h-4 w-4" />
+                  Saham
                 </Link>
               </Button>
               <Button
@@ -443,59 +389,9 @@ export default function Dashboard() {
                 className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
                 asChild
               >
-                <Link href="#">
-                  <Star className="h-4 w-4" />
-                  Watchlist
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
-                asChild
-              >
-                <Link href="#">
-                  <Briefcase className="h-4 w-4" />
-                  Portofolio
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
-                asChild
-              >
-                <Link href="#">
-                  <BarChart3 className="h-4 w-4" />
-                  Analisis Teknikal
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
-                asChild
-              >
-                <Link href="#">
+                <Link href="/berita">
                   <Newspaper className="h-4 w-4" />
-                  Berita & Analisis
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
-                asChild
-              >
-                <Link href="#">
-                  <Globe className="h-4 w-4" />
-                  Pasar Global
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
-                asChild
-              >
-                <Link href="#">
-                  <Clock className="h-4 w-4" />
-                  Riwayat
+                  Berita
                 </Link>
               </Button>
             </nav>
@@ -508,9 +404,7 @@ export default function Dashboard() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-9 border-secondary/30 bg-white/80 focus:border-accent text-sm"
               />
-            </div>
-
-            <h3 className="mb-2 text-sm font-medium text-primary dark:text-blue/60">Watchlist</h3>
+            </div>            <h3 className="mb-2 text-sm font-medium text-primary dark:text-blue/60">Daftar Saham</h3>
             <div className="grid gap-1 flex-1 overflow-y-auto max-h-30">
               <div className="grid gap-1">
                 {filteredEmiten.map((emiten) => (
@@ -540,8 +434,7 @@ export default function Dashboard() {
                 ))}
               </div>
             </div>
-            
-            <div className="flex items-center gap-2 mb-2">
+              <div className="mt-auto flex items-center gap-2 mb-2">
               <p className="text-sm text-muted-foreground">@Big-Data</p>
             </div>
           </div>
@@ -559,18 +452,11 @@ export default function Dashboard() {
               </div>
             </div>
             <Tabs defaultValue="overview" className="space-y-4">
-              <TabsList className="bg-white/80 dark:bg-background/80 p-1">
-                <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+              <TabsList className="bg-white/80 dark:bg-background/80 p-1">                <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-white">
                   Ringkasan
                 </TabsTrigger>
                 <TabsTrigger value="stocks" className="data-[state=active]:bg-primary data-[state=active]:text-white">
                   Saham
-                </TabsTrigger>
-                <TabsTrigger
-                  value="portfolio"
-                  className="data-[state=active]:bg-primary data-[state=active]:text-white"
-                >
-                  Portofolio
                 </TabsTrigger>
                 <TabsTrigger
                   value="comparison"
@@ -583,7 +469,10 @@ export default function Dashboard() {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="overview" className="space-y-4 slide-up">
-                <MarketOverview />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <MarketOverview />
+                  <TopStocks />
+                </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                   <Card className="lg:col-span-5 bg-white/80 backdrop-blur-sm border-secondary/20 card-hover">
                     <CardHeader>
@@ -645,8 +534,7 @@ export default function Dashboard() {
                     <CardHeader>
                       <CardTitle>Detail Saham</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      {stockData ? (
+                    <CardContent>                      {stockData ? (
                         <div className="space-y-4">
                           <div className="grid grid-cols-2 gap-2 text-sm">
                             <div className="text-muted-foreground">Open</div>
@@ -660,18 +548,7 @@ export default function Dashboard() {
                             <div className="text-muted-foreground">Volume</div>
                             <div className="text-right font-medium">{formatVolume(stockData.volume)}</div>
                           </div>
-                          <Separator className="bg-secondary/30" />
-                          <div className="flex justify-between">
-                            <Button
-                              variant="outline"
-                              className="border-secondary/30 bg-white hover:bg-primary/10 hover:text-primary hover:border-primary/50 dark:hover:border-secondary/30 dark:hover:bg-primary/30 dark:hover:text-blue-100 dark:bg-card dark:text-blue-100 dark:border-card/50"
-                            >
-                              Beli
-                            </Button>
-                            <Button className="bg-accent hover:bg-accent/90 text-white">
-                              Tambah ke Watchlist
-                            </Button>
-                          </div>
+                          <Separator className="bg-secondary/30 my-2" />
                         </div>
                       ) : (
                         <div className="space-y-4">
@@ -683,17 +560,12 @@ export default function Dashboard() {
                               </>
                             ))}
                           </div>
-                          <Separator className="bg-secondary/30" />
-                          <div className="flex justify-between">
-                            <Skeleton className="h-9 w-16" />
-                            <Skeleton className="h-9 w-32" />
-                          </div>
+                          <Separator className="bg-secondary/30" />                          <Separator className="bg-secondary/30 my-2" />
                         </div>
                       )}
                     </CardContent>
                   </Card>
-                </div>
-                <div className="grid grid-cols-[1fr_2fr] gap-4">
+                </div>                <div className="grid grid-cols-[1fr_2fr] gap-4">
                   <StockFinancials financialData={financialData} />
                   <FinancialChartCard financialData={financialData} />
                 </div>
@@ -715,7 +587,7 @@ export default function Dashboard() {
                           <TableHead className="text-right">Perubahan</TableHead>
                           <TableHead className="text-right">% Perubahan</TableHead>
                           <TableHead className="text-right">Volume</TableHead>
-                          <TableHead></TableHead>
+                          <TableHead className="text-right">Aksi</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -743,34 +615,6 @@ export default function Dashboard() {
                       Lihat Semua Saham
                     </Button>
                   </CardFooter>
-                </Card>
-              </TabsContent>
-              <TabsContent value="portfolio" className="space-y-4 slide-up">
-                <PortfolioAnalytics />
-                <Card className="bg-white/80 backdrop-blur-sm border-secondary/20 card-hover">
-                  <CardHeader>
-                    <CardTitle>Saham yang Dimiliki</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="hover:bg-secondary/5">
-                          <TableHead>Kode</TableHead>
-                          <TableHead>Nama</TableHead>
-                          <TableHead className="text-right">Jumlah</TableHead>
-                          <TableHead className="text-right">Harga Beli</TableHead>
-                          <TableHead className="text-right">Harga Saat Ini</TableHead>
-                          <TableHead className="text-right">Nilai</TableHead>
-                          <TableHead className="text-right">P/L</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        <TableRow className="hover:bg-secondary/5">
-                          <TableCell colSpan={7}>Data portofolio belum tersedia</TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </CardContent>
                 </Card>
               </TabsContent>
               <TabsContent value="comparison" className="space-y-4 slide-up">

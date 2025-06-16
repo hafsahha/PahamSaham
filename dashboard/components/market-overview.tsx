@@ -2,197 +2,230 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // Interface untuk data dari API
 interface MarketData {
   name: string
   value: number
   changePercent: number
+  source?: string // Untuk menandai sumber data (opsional)
+}
+
+interface IndexHistory {
+  Date: string
+  Open: number
+  High: number
+  Low: number
+  Close: number
+  Volume: number
+  Dividends?: number
+  "Stock Splits"?: number
+}
+
+interface IndexData {
+  symbol: string
+  info: {
+    shortName?: string
+    longName?: string
+  }
+  history: IndexHistory[]
 }
 
 // Fungsi untuk fetch data dari API
 async function fetchMarketData(type: string): Promise<MarketData[]> {
   try {
-    const apiUrl = `http://localhost:5000/api/harga?type=${type}` // Sesuaikan dengan struktur API Anda
-    const res = await fetch(apiUrl, { cache: "no-store" })
+    // Gunakan endpoint khusus market-overview yang diperbarui
+    const apiUrl = `http://localhost:5000/api/market-overview?type=${type}`;
+    
+    const res = await fetch(apiUrl, { cache: 'no-store' });
+    
     if (!res.ok) {
-      throw new Error(`Failed to fetch ${type} data: ${res.status} ${res.statusText}`)
+      // Jika response status bukan 200 OK
+      if (res.status === 404) {
+        console.warn(`Data ${type} tidak tersedia`);
+        return []; // Return empty array instead of throwing error
+      } else {
+        throw new Error(`Failed to fetch ${type} data: ${res.status} ${res.statusText}`);
+      }
     }
-    const data = await res.json()
-    // Asumsi data dari API dalam format: [{ name: "IHSG", value: 7234.56, changePercent: 1.2 }, ...]
-    return data
-  } catch (error) {
-    console.error(`Error fetching ${type} data:`, error)
-    // Fallback data jika API gagal
-    switch (type) {
-      case "indices":
-        return [
-          { name: "IHSG", value: 7234.56, changePercent: 1.2 },
-          { name: "LQ45", value: 982.45, changePercent: 0.8 },
-          { name: "JII", value: 567.23, changePercent: -0.3 },
-          { name: "IDX80", value: 234.56, changePercent: 0.5 },
-          { name: "IDX30", value: 567.89, changePercent: -0.3 },
-          { name: "IDXBUMN20", value: 432.15, changePercent: 1.5 },
-          { name: "IDXSMC-LIQ", value: 345.67, changePercent: 0.2 },
-          { name: "IDXESGL", value: 287.65, changePercent: -0.7 },
-        ]
-      case "sectors":
-        return [
-          { name: "Keuangan", value: 1234.56, changePercent: 2.1 },
-          { name: "Konsumer", value: 876.54, changePercent: 0.9 },
-          { name: "Properti", value: 432.12, changePercent: -1.2 },
-          { name: "Infrastruktur", value: 765.43, changePercent: 1.7 },
-          { name: "Pertambangan", value: 543.21, changePercent: -0.8 },
-          { name: "Pertanian", value: 321.98, changePercent: 0.4 },
-          { name: "Teknologi", value: 876.54, changePercent: 3.2 },
-          { name: "Kesehatan", value: 654.32, changePercent: 1.5 },
-        ]
-      case "commodities":
-        return [
-          { name: "Minyak Mentah", value: 75.43, changePercent: 2.3 },
-          { name: "Emas", value: 1876.54, changePercent: 0.5 },
-          { name: "CPO", value: 11450, changePercent: -0.7 },
-          { name: "Batubara", value: 98.75, changePercent: 1.2 },
-        ]
-      case "forex":
-        return [
-          { name: "USD/IDR", value: 15432, changePercent: -0.3 },
-          { name: "EUR/IDR", value: 16789, changePercent: 0.2 },
-          { name: "JPY/IDR", value: 107.65, changePercent: -0.5 },
-          { name: "SGD/IDR", value: 11432, changePercent: 0.1 },
-        ]
-      default:
-        return []
+    
+    // Coba parsing response JSON
+    let data = await res.json();
+    
+    // Cek jika response adalah object dengan property 'status' = 'error'
+    if (data && data.status === 'error') {
+      console.warn(`API Error: ${data.message || 'Unknown error'}`);
+      return []; // Return empty array instead of throwing error
     }
+    
+    // Cek jika data kosong atau tidak valid
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      console.warn(`Tidak ada data ${type} tersedia`);
+      return []; // Return empty array instead of throwing error
+    }
+    
+    return data as MarketData[];  } catch (error) {
+    console.error(`Error fetching ${type} data:`, error);
+    // Tidak menggunakan fallback data lagi dan tidak throw error
+    console.warn(`Gagal memuat data ${type}. Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    return []; // Return empty array instead of throwing error
   }
 }
 
+// Fallback data untuk sektor saham Indonesia
+const sectorFallbackData: MarketData[] = [
+  { name: "Keuangan", value: 1642.58, changePercent: 0.87 },
+  { name: "Konsumer", value: 850.25, changePercent: -0.43 },
+  { name: "Properti", value: 485.62, changePercent: 0.52 },
+  { name: "Infrastruktur", value: 1230.78, changePercent: 1.24 },
+  { name: "Pertambangan", value: 2450.32, changePercent: -1.85 },
+  { name: "Pertanian", value: 1120.48, changePercent: 0.64 },
+  { name: "Teknologi", value: 986.24, changePercent: 2.31 },
+  { name: "Kesehatan", value: 775.91, changePercent: 0.38 }
+];
+
+// Fallback data untuk komoditas relevan dengan Indonesia
+const commoditiesFallbackData: MarketData[] = [
+  { name: "Minyak (Brent)", value: 78.45, changePercent: -0.65 },
+  { name: "Batubara", value: 148.32, changePercent: 1.24 },
+  { name: "CPO", value: 3785.50, changePercent: -0.82 },
+  { name: "Emas", value: 2305.60, changePercent: 0.45 }
+];
+
+// Fallback data untuk forex yang relevan dengan Indonesia
+const forexFallbackData: MarketData[] = [
+  { name: "USD/IDR", value: 15750, changePercent: -0.25 },
+  { name: "EUR/IDR", value: 17250, changePercent: 0.15 },
+  { name: "JPY/IDR", value: 109.80, changePercent: -0.35 },
+  { name: "SGD/IDR", value: 11850, changePercent: 0.20 }
+];
+
 export default function MarketOverview() {
-  const [indicesData, setIndicesData] = useState<MarketData[]>([])
   const [sectorsData, setSectorsData] = useState<MarketData[]>([])
-  const [commoditiesData, setCommoditiesData] = useState<MarketData[]>([])
-  const [forexData, setForexData] = useState<MarketData[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [errorMessages, setErrorMessages] = useState<{[key: string]: string}>({})
+  const [useFallbackData, setUseFallbackData] = useState<{[key: string]: boolean}>({})
 
   // Fetch data saat komponen dimuat
   useEffect(() => {
     async function loadMarketData() {
       setIsLoading(true)
-      const [indices, sectors, commodities, forex] = await Promise.all([
-        fetchMarketData("indices"),
-        fetchMarketData("sectors"),
-        fetchMarketData("commodities"),
-        fetchMarketData("forex"),
-      ])
-      setIndicesData(indices)
-      setSectorsData(sectors)
-      setCommoditiesData(commodities)
-      setForexData(forex)
-      setIsLoading(false)
+      const errors: {[key: string]: string} = {};
+      const fallbacks: {[key: string]: boolean} = {};
+      
+      // Fungsi untuk menangani data sektor
+      async function fetchSectorData() {
+        try {
+          const data = await fetchMarketData("sectors");
+          if (data.length > 0) {
+            return data;
+          } else {
+            // Data kosong, gunakan fallback
+            console.warn(`Data sektor kosong, menggunakan data fallback`);
+            fallbacks["sectors"] = true;
+            return sectorFallbackData;
+          }
+        } catch (err) {
+          console.error(`Error loading sektor data:`, err);
+          errors["sectors"] = err instanceof Error ? err.message : `Gagal memuat data sektor`;
+          
+          // Gunakan data fallback jika gagal fetch
+          fallbacks["sectors"] = true;
+          return sectorFallbackData;
+        }
+      }
+      
+      // Fetch data sektor
+      const sectors = await fetchSectorData();
+      
+      // Set data dan error
+      setSectorsData(sectors);
+      setErrorMessages(errors);
+      setUseFallbackData(fallbacks);
+      setIsLoading(false);
     }
+    
     loadMarketData()
+    
+    // Refresh data setiap 5 menit
+    const intervalId = setInterval(() => {
+      loadMarketData()
+    }, 5 * 60 * 1000)
+    
+    return () => clearInterval(intervalId)
   }, [])
-
-  // Format nilai untuk ditampilkan
+  // Format nilai untuk ditampilkan sesuai dengan konteks saham Indonesia
   const formatValue = (value: number, type: string) => {
     if (type === "commodities") {
-      if (value > 1000)
+      // Komoditas berbeda format berdasarkan jenisnya
+      if (value > 1000) {
+        // Batubara biasanya dalam USD
         return `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-      return `Rp${value.toLocaleString("id-ID")}`
+      } else if (value > 100) {
+        // CPO dalam Rupiah
+        return `Rp${value.toLocaleString("id-ID")}`
+      } else {
+        // Minyak biasanya dalam USD
+        return `$${value.toLocaleString("en-US", { minimumFractionDigits: 2 })}`
+      }
     }
-    if (type === "forex") {
-      return value.toLocaleString("id-ID", { minimumFractionDigits: 0 })
+    else if (type === "forex") {
+      // Forex dalam format IDR (tanpa koma desimal)
+      return `Rp${value.toLocaleString("id-ID", { minimumFractionDigits: 0 })}`
     }
+    else if (type === "indices") {
+      // Untuk indeks saham Indonesia (IHSG, LQ45, dll)
+      return value.toLocaleString("id-ID", { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+    } 
+    else if (type === "sectors") {
+      // Sektor saham di BEI
+      return value.toLocaleString("id-ID", { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+    }
+    
+    // Default format
     return value.toLocaleString("id-ID", { minimumFractionDigits: 2 })
   }
 
   const formatChange = (changePercent: number) => {
-    return `${changePercent >= 0 ? "+" : ""}${changePercent.toFixed(1)}%`
+    return `${changePercent >= 0 ? "+" : ""}${changePercent.toFixed(2)}%`
   }
-
   return (
     <Card className="bg-white/80 dark:bg-background/80 backdrop-blur-sm border-secondary/20 overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-accent to-primary/70"></div>
       <CardHeader>
-        <CardTitle>Ringkasan Pasar</CardTitle>
-        <CardDescription>Performa indeks utama dan sektor</CardDescription>
-      </CardHeader>
+        <CardTitle>Ringkasan Sektor</CardTitle>
+        <CardDescription>Performa sektor-sektor di Bursa Efek Indonesia</CardDescription>
+      </CardHeader>      
       <CardContent>
         {isLoading ? (
-          <div className="text-center text-muted-foreground">Loading data pasar...</div>
+          <div className="text-center text-muted-foreground">Loading data sektor...</div>
         ) : (
-          <Tabs defaultValue="indices">
-            <TabsList className="mb-4 bg-secondary/20 dark:bg-muted/20">
-              <TabsTrigger value="indices" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                Indeks
-              </TabsTrigger>
-              <TabsTrigger value="sectors" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                Sektor
-              </TabsTrigger>
-              <TabsTrigger
-                value="commodities"
-                className="data-[state=active]:bg-primary data-[state=active]:text-white"
-              >
-                Komoditas
-              </TabsTrigger>
-              <TabsTrigger value="forex" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                Forex
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="indices">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {indicesData.map((item) => (
-                  <MarketTile
-                    key={item.name}
-                    name={item.name}
-                    value={formatValue(item.value, "indices")}
-                    change={formatChange(item.changePercent)}
-                    isPositive={item.changePercent >= 0}
-                  />
-                ))}
+          <>
+            {errorMessages['sectors'] ? (
+              <div className="text-center text-red-500 p-3 bg-red-50 dark:bg-red-900/20 rounded-md mb-4">
+                {errorMessages['sectors']}
               </div>
-            </TabsContent>
-            <TabsContent value="sectors">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {sectorsData.map((item) => (
-                  <MarketTile
-                    key={item.name}
-                    name={item.name}
-                    value={formatValue(item.value, "sectors")}
-                    change={formatChange(item.changePercent)}
-                    isPositive={item.changePercent >= 0}
-                  />
-                ))}
+            ) : useFallbackData['sectors'] ? (
+              <div className="text-center text-amber-500 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-md mb-4">
+                Data sektor dari API tidak tersedia. Menampilkan data estimasi.
               </div>
-            </TabsContent>
-            <TabsContent value="commodities">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {commoditiesData.map((item) => (
-                  <MarketTile
-                    key={item.name}
-                    name={item.name}
-                    value={formatValue(item.value, "commodities")}
-                    change={formatChange(item.changePercent)}
-                    isPositive={item.changePercent >= 0}
-                  />
-                ))}
+            ) : (
+              <div className="text-center text-blue-500 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md mb-4">
+                Data sektor berasal dari agregasi data saham MongoDB (rata-rata tiap sektor)
               </div>
-            </TabsContent>
-            <TabsContent value="forex">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {forexData.map((item) => (
-                  <MarketTile
-                    key={item.name}
-                    name={item.name}
-                    value={formatValue(item.value, "forex")}
-                    change={formatChange(item.changePercent)}
-                    isPositive={item.changePercent >= 0}
-                  />
-                ))}
-              </div>
-            </TabsContent>
-          </Tabs>
+            )}
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">              {sectorsData.map((item) => (
+                <MarketTile
+                  key={item.name}
+                  name={item.name}
+                  value={formatValue(item.value, "sectors")}
+                  change={formatChange(item.changePercent)}
+                  isPositive={item.changePercent >= 0}
+                />
+              ))}
+            </div>
+          </>
         )}
       </CardContent>
     </Card>
@@ -211,10 +244,18 @@ function MarketTile({ name, value, change, isPositive }: MarketTileProps) {
     <div className="bg-white dark:bg-card rounded-lg p-3 shadow-sm border border-secondary/10 dark:border-border relative overflow-hidden group hover:border-primary/20 transition-colors">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
       <div className="text-sm font-medium text-primary dark:text-primary">{name}</div>
-      <div className="text-lg font-bold mt-1 text-foreground dark:text-foreground">{value}</div>
-      <div className={`text-sm mt-1 ${isPositive ? "text-accent dark:text-accent" : "text-red-500 dark:text-red-400"}`}>
-        {change}
-      </div>
+      
+      {/* Tampilkan pesan "Data tidak tersedia" jika tidak ada nilai */}
+      {value ? (
+        <>
+          <div className="text-lg font-bold mt-1 text-foreground dark:text-foreground">{value}</div>
+          <div className={`text-sm mt-1 ${isPositive ? "text-accent dark:text-accent" : "text-red-500 dark:text-red-400"}`}>
+            {change}
+          </div>
+        </>
+      ) : (
+        <div className="text-sm mt-1 text-yellow-600 dark:text-yellow-400">Data tidak tersedia</div>
+      )}
     </div>
   )
 }
