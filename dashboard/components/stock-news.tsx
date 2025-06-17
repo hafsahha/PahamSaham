@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import Link from "next/link"
 
 interface NewsItem {
@@ -39,6 +41,10 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
   const [error, setError] = useState<string | null>(null)
   const [isUsingFallback, setIsUsingFallback] = useState(false)
   const [isClient, setIsClient] = useState(false)
+    // Pagination and filter states for fullPage mode
+  const [currentPage, setCurrentPage] = useState(1)
+  const [selectedEmitens, setSelectedEmitens] = useState<string[]>([])
+  const itemsPerPage = fullPage ? 12 : 6
 
   // Fix hydration by detecting client-side
   useEffect(() => {
@@ -242,8 +248,7 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
       .replace(/\s+/g, '-') // Replace spaces with hyphens
       .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
       .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
-      .trim()
-    
+      .trim()    
     console.log('🔗 Stock-news creating link:')
     console.log('📰 Title:', title)
     console.log('🏷️  Slug:', result)
@@ -252,6 +257,60 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
     
     return result
   }
+  // Filter and pagination logic for fullPage mode
+  const filteredNews = useMemo(() => {
+    if (!fullPage) {
+      return newsItems.slice(0, 6) // Show only 6 items for non-fullPage
+    }
+    
+    let filtered = newsItems
+    
+    // Apply emiten filter (multi-select)
+    if (selectedEmitens.length > 0) {
+      filtered = filtered.filter(item => selectedEmitens.includes(item.emiten))
+    }
+    
+    return filtered
+  }, [newsItems, selectedEmitens, fullPage])
+
+  // Paginated news
+  const paginatedNews = useMemo(() => {
+    if (!fullPage) {
+      return filteredNews
+    }
+    
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return filteredNews.slice(startIndex, endIndex)
+  }, [filteredNews, currentPage, itemsPerPage, fullPage])
+
+  // Get unique emiten list for filter
+  const uniqueEmiten = useMemo(() => {
+    const emitens = Array.from(new Set(newsItems.map(item => item.emiten)))
+    return emitens.sort()
+  }, [newsItems])
+  // Reset pagination when filter changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [selectedEmitens])
+  // Helper functions for multi-select
+  const toggleEmiten = (emiten: string) => {
+    setSelectedEmitens(prev => 
+      prev.includes(emiten) 
+        ? prev.filter(e => e !== emiten)
+        : [...prev, emiten]
+    )
+  }
+
+  const clearAllFilters = () => {
+    setSelectedEmitens([])
+  }
+  const selectAllEmitens = () => {
+    setSelectedEmitens(uniqueEmiten)
+  }
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredNews.length / itemsPerPage)
 
   if (loading) {
     return (
@@ -362,15 +421,78 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
                 {loading ? '...' : '🔄 Test'}
               </Button>
             </div>
-          </div>
-        )}
+          </div>        )}
         
         {fullPage ? (
-          // Grid layout for full page
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {newsItems.map((news) => (
-              <Card key={news._id.$oid} className="overflow-hidden h-full flex flex-col bg-background/50 dark:bg-card/50 border-secondary/30 dark:border-border/50 hover:shadow-md transition-shadow">
-                <CardHeader className="p-4">                  <CardTitle className="text-base leading-tight">
+          // Full page with filters and pagination
+          <div className="space-y-4">            {/* Filter Controls */}
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Filter Emiten:</span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={selectAllEmitens}
+                      disabled={selectedEmitens.length === uniqueEmiten.length}
+                    >
+                      Pilih Semua
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={clearAllFilters}
+                      disabled={selectedEmitens.length === 0}
+                    >
+                      Hapus Filter
+                    </Button>
+                  </div>
+                </div>
+                  {/* Selected emitens display */}
+                {selectedEmitens.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {selectedEmitens.map((emiten) => (
+                      <Badge
+                        key={emiten}
+                        variant="default"
+                        className="cursor-pointer bg-primary text-primary-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                        onClick={() => toggleEmiten(emiten)}
+                      >
+                        {emiten}
+                        <X className="h-3 w-3 ml-1" />
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                  {/* Available emitens */}
+                <div className="flex flex-wrap gap-1">
+                  {uniqueEmiten
+                    .filter(emiten => !selectedEmitens.includes(emiten))
+                    .map((emiten) => (
+                      <Badge
+                        key={emiten}
+                        variant="outline"
+                        className="cursor-pointer border-border text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                        onClick={() => toggleEmiten(emiten)}
+                      >
+                        {emiten}
+                      </Badge>
+                    ))}
+                </div>
+              </div>
+              
+              <div className="text-sm text-muted-foreground">
+                Menampilkan {paginatedNews.length} dari {filteredNews.length} berita
+                {selectedEmitens.length > 0 && ` untuk ${selectedEmitens.length} emiten`}
+              </div>
+            </div>
+
+            {/* News Grid */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {paginatedNews.map((news) => (
+                <Card key={news._id.$oid} className="overflow-hidden h-full flex flex-col bg-background/50 dark:bg-card/50 border-secondary/30 dark:border-border/50 hover:shadow-md transition-shadow">
+                  <CardHeader className="p-4"><CardTitle className="text-base leading-tight">
                     <Link href={`/berita/${createSlugFromTitle(news.title)}`} className="hover:text-primary transition-colors">
                       {cleanTitle(news.title)}
                     </Link>
@@ -394,44 +516,115 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
                     >
                       {news.sentimen}
                     </Badge>
-                  </div>
-                </CardContent>
+                  </div>                </CardContent>
               </Card>
             ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className="flex items-center gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum = i + 1
+                    const isCurrentPage = pageNum === currentPage
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={isCurrentPage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    )
+                  })}
+                  
+                  {totalPages > 5 && (
+                    <>
+                      {currentPage < totalPages - 2 && <span className="px-2">...</span>}
+                      {currentPage < totalPages - 1 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(totalPages)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {totalPages}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className="flex items-center gap-1"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
-          // List layout for preview mode
+          // List layout for non-full page
           <div className="space-y-4">
-            {newsItems.slice(0, 3).map((news, index) => (
-              <div key={index} className="group">
-                <div className="space-y-2">                  <Link href={`/berita/${createSlugFromTitle(news.title)}`} className="block">
-                    <h3 className="font-medium hover:text-primary cursor-pointer group-hover:text-primary transition-colors dark:text-foreground">
-                      {cleanTitle(news.title)}
-                    </h3>
-                  </Link><div className="flex items-center text-sm text-muted-foreground">
-                    <span className="capitalize">{news.publisher}</span>
-                    <span className="mx-2">•</span>
-                    <span suppressHydrationWarning>{formatDate(news.date)}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    <Badge
-                      variant="outline"
-                      className="bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary border-primary/30 hover:bg-primary/20"
-                    >
-                      {news.emiten}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className={getSentimentColor(news.sentimen)}
-                    >
-                      {news.sentimen}
-                    </Badge>
+            {newsItems.slice(0, 6).map((news, index) => (
+              <div key={news._id.$oid} className="group">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1">
+                    <Link href={`/berita/${createSlugFromTitle(news.title)}`} className="block">
+                      <h3 className="font-medium hover:text-primary cursor-pointer group-hover:text-primary transition-colors dark:text-foreground">
+                        {cleanTitle(news.title)}
+                      </h3>
+                    </Link>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                      {news.summary}
+                    </p>
                   </div>
                 </div>
-                {index < 2 && <Separator className="mt-4 bg-secondary/30 dark:bg-border/50" />}
-              </div>
+                <div className="flex items-center text-xs text-muted-foreground mt-2">
+                  <span className="capitalize">{news.publisher}</span>
+                  <span className="mx-2">•</span>
+                  <span suppressHydrationWarning>{formatDate(news.date)}</span>
+                </div>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  <Badge
+                    variant="outline"
+                    className="bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary border-primary/30 hover:bg-primary/20"
+                  >
+                    {news.emiten}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={getSentimentColor(news.sentimen)}
+                  >
+                    {news.sentimen}
+                  </Badge>
+                </div>
+                {index < 5 && <Separator className="mt-4 bg-secondary/30 dark:bg-border/50" />}              </div>
             ))}
-          </div>        )}        {!fullPage && newsItems.length > 0 && (
+          </div>
+        )}
+
+        {!fullPage && newsItems.length > 0 && (
           <Button
             variant="outline"
             className="w-full mt-4 border-secondary/30 dark:border-border hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 dark:hover:text-primary hover:border-primary/50"
@@ -440,6 +633,7 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
             Lihat Semua Berita
           </Button>
         )}
+
         {newsItems.length === 0 && !loading && !error && (
           <div className="text-center py-8">
             <p className="text-muted-foreground">Tidak ada berita tersedia saat ini.</p>
