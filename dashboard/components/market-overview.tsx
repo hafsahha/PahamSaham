@@ -199,23 +199,8 @@ export default function MarketOverview() {
       <CardContent>
         {isLoading ? (
           <div className="text-center text-muted-foreground">Loading data sektor...</div>
-        ) : (
-          <>
-            {errorMessages['sectors'] ? (
-              <div className="text-center text-red-500 p-3 bg-red-50 dark:bg-red-900/20 rounded-md mb-4">
-                {errorMessages['sectors']}
-              </div>
-            ) : useFallbackData['sectors'] ? (
-              <div className="text-center text-amber-500 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-md mb-4">
-                Data sektor dari API tidak tersedia. Menampilkan data estimasi.
-              </div>
-            ) : (
-              <div className="text-center text-blue-500 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md mb-4">
-                Data sektor berasal dari agregasi data saham MongoDB (rata-rata tiap sektor)
-              </div>
-            )}
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">              {sectorsData.map((item) => (
+        ) : (          <>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{sectorsData.map((item) => (
                 <MarketTile
                   key={item.name}
                   name={item.name}

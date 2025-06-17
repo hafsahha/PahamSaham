@@ -3,12 +3,19 @@
 import { useState, useEffect } from "react"
 import { ArrowDown, ArrowUp } from "lucide-react"
 
+// Define interfaces for ticker data
+interface TickerItem {
+  symbol: string;
+  price: string;
+  change: string;
+  isPositive: boolean;
+}
+
 export default function StockTicker() {
-  const [tickerItems, setTickerItems] = useState([]);
+  const [tickerItems, setTickerItems] = useState<TickerItem[]>([]);
   const [duplicated, setDuplicated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
+  const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     // Fungsi untuk mengambil daftar emiten
     const fetchAllEmiten = async () => {
@@ -18,9 +25,13 @@ export default function StockTicker() {
         if (!emitenResponse.ok) {
           throw new Error("Failed to fetch emitens");
         }
-        const emitenList = await emitenResponse.json();
+        const allEmitenList = await emitenResponse.json();
+        
+        // Ambil hanya 10 emiten pertama
+        const emitenList = allEmitenList.slice(0, 10);
+        console.log("Fetching data for 10 emitens:", emitenList);
 
-        // Ambil harga saham untuk setiap emiten
+        // Ambil harga saham untuk 10 emiten
         const pricePromises = emitenList.map(async (emiten: string) => {
           const priceResponse = await fetch(`http://localhost:5000/api/harga?emiten=${emiten}&period=daily`);
           if (!priceResponse.ok) {
@@ -39,13 +50,13 @@ export default function StockTicker() {
         });
 
         // Menunggu semua data harga saham selesai
-        const allPriceData = await Promise.all(pricePromises);
-
-        // Set data ticker dengan data harga yang sudah lengkap
+        const allPriceData = await Promise.all(pricePromises);        // Set data ticker dengan data harga yang sudah lengkap
         setTickerItems(allPriceData);
         setDuplicated(true);
-      } catch (error) {
-        setError(error.message);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+        setError(errorMessage);
+        console.error('Error fetching ticker data:', errorMessage);
       } finally {
         setLoading(false);
       }
@@ -64,9 +75,8 @@ export default function StockTicker() {
 
   return (
     <div className="hidden md:block flex-1 overflow-hidden bg-white/50 dark:bg-background/50 backdrop-blur-sm border-x border-secondary/20">
-      <div className="ticker-wrap">
-        <div className="ticker">
-          {tickerItems.map((item, index) => (
+      <div className="ticker-wrap">        <div className="ticker">
+          {tickerItems.map((item: TickerItem, index: number) => (
             <div key={index} className="ticker-item">
               <span className="font-medium text-primary">{item.symbol}</span>
               <span className="mx-1">Rp{item.price}</span>
@@ -77,7 +87,7 @@ export default function StockTicker() {
             </div>
           ))}
           {duplicated &&
-            tickerItems.map((item, index) => (
+            tickerItems.map((item: TickerItem, index: number) => (
               <div key={`dup-${index}`} className="ticker-item">
                 <span className="font-medium text-primary">{item.symbol}</span>
                 <span className="mx-1">Rp{item.price}</span>
