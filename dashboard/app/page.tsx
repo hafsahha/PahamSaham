@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo } from "react"
+import { useSearchParams } from "next/navigation"
 import {
   ArrowDown,
   ArrowUp,
@@ -220,6 +221,7 @@ function calculateStockData(prices: PriceData[]): StockData | null {
 
 // Komponen Client
 export default function Dashboard() {
+  const searchParams = useSearchParams()
   const [initialEmiten, setInitialEmiten] = useState<Emiten[]>([])
   const [activeStock, setActiveStock] = useState("BBRI.JK")
   const [priceData, setPriceData] = useState<PriceData[]>([])
@@ -232,6 +234,14 @@ export default function Dashboard() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [activeTab, setActiveTab] = useState("overview")
+
+  // Check for tab query parameter
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')
+    if (tabParam) {
+      setActiveTab(tabParam)
+    }
+  }, [searchParams])
 
   // Function to switch to news tab
   const handleShowAllNews = () => {
@@ -636,18 +646,9 @@ export default function Dashboard() {
                           </TableRow>
                         ) : (
                           paginatedEmiten.map((emiten) => <StockRow key={emiten.ticker} emiten={emiten} />)
-                        )}
-                      </TableBody>
+                        )}                      </TableBody>
                     </Table>
                   </CardContent>
-                  <CardFooter>
-                    <Button
-                      variant="outline"
-                      className="w-full border-secondary/30 hover:bg-primary/10 hover:text-primary hover:border-primary/50"
-                    >
-                      Lihat Semua Saham
-                    </Button>
-                  </CardFooter>
                   <div className="flex justify-center items-center gap-2 mt-4">
                     <Button
                       variant="outline"

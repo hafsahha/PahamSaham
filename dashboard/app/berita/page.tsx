@@ -105,6 +105,20 @@ export default function NewsListingPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
 
+  // Helper functions for title processing
+  const cleanTitle = (title: string) => {
+    return title.endsWith('.') ? title.slice(0, -1) : title
+  }
+  const createSlugFromTitle = (title: string) => {
+    return cleanTitle(title)
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '') // Remove special characters except spaces and hyphens
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+      .trim()
+  }
+
   // Get all unique tags
   const allTags = Array.from(new Set(newsArticles.flatMap((article) => article.tags))).sort()
 
@@ -163,11 +177,10 @@ export default function NewsListingPage() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredArticles.map((article) => (
-          <Card key={article.id} className="overflow-hidden h-full flex flex-col">
-            <CardHeader className="p-4">
+          <Card key={article.id} className="overflow-hidden h-full flex flex-col">            <CardHeader className="p-4">
               <CardTitle className="text-lg">
-                <Link href={`/berita/${article.id}`} className="hover:text-primary transition-colors">
-                  {article.title}
+                <Link href={`/berita/${createSlugFromTitle(article.title)}`} className="hover:text-primary transition-colors">
+                  {cleanTitle(article.title)}
                 </Link>
               </CardTitle>
               <CardDescription className="flex items-center justify-between">

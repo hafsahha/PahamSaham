@@ -126,8 +126,7 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
     // Cleanup function
     return () => {
       isMounted = false
-    }
-  }, [])
+    }  }, [])
 
   // Fallback dummy data for development/testing
   const getFallbackData = (): NewsItem[] => [
@@ -137,11 +136,11 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
       date: "16/06/2025 10:00",
       emiten: "BBRI",
       processed: true,
-      publisher: "demo",
+      publisher: "CNBC Indonesia",
       sentimen: "positif" as const,
-      summary: "Contoh berita fallback untuk development. API server belum tersedia.",
+      summary: "Bank Indonesia (BI) memutuskan untuk mempertahankan suku bunga acuan atau BI Rate di level 5,75% dalam Rapat Dewan Gubernur (RDG) bulanan. Keputusan ini sejalan dengan upaya menjaga stabilitas nilai tukar rupiah dan mengendalikan inflasi.",
       text: "Ini adalah data fallback untuk development ketika API tidak tersedia.",
-      title: "Data Demo - API Tidak Tersedia",
+      title: "Bank Indonesia Pertahankan Suku Bunga Acuan di Level 5,75%",
       url: "#"
     },
     {
@@ -150,11 +149,11 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
       date: "16/06/2025 09:30",
       emiten: "TLKM",
       processed: true,
-      publisher: "demo",
-      sentimen: "netral" as const,
-      summary: "Berita demo kedua untuk testing komponen ketika API belum ready.",
+      publisher: "Investor Daily",
+      sentimen: "positif" as const,
+      summary: "PT Telkom Indonesia Tbk (TLKM) resmi meluncurkan layanan 5G di 10 kota besar di Indonesia. Langkah ini merupakan bagian dari strategi perseroan untuk memperkuat posisinya di industri telekomunikasi dan digital.",
       text: "Data fallback kedua untuk development.",
-      title: "Demo Berita Kedua - Development Mode", 
+      title: "Telkom Indonesia Luncurkan Layanan 5G di 10 Kota Besar", 
       url: "#"
     },
     {
@@ -162,12 +161,11 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
       category: "stock",
       date: "16/06/2025 09:00", 
       emiten: "BBCA",
-      processed: true,
-      publisher: "demo",
-      sentimen: "negatif" as const,
-      summary: "Berita demo ketiga dengan sentimen negatif untuk testing tampilan.",
+      processed: true,      publisher: "Bisnis.com",
+      sentimen: "positif" as const,
+      summary: "PT Astra International Tbk (ASII) mencatatkan pertumbuhan laba bersih sebesar 15% secara year-on-year (yoy) pada kuartal II-2023. Kinerja positif ini didorong oleh kontribusi dari segmen otomotif dan jasa keuangan.",
       text: "Data fallback ketiga untuk development.",
-      title: "Demo Berita Ketiga - Testing Sentimen",
+      title: "Astra International Catat Pertumbuhan Laba 15% di Kuartal II-2023",
       url: "#"    }
   ]
   useEffect(() => {
@@ -232,10 +230,27 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400 border-gray-300'
     }
   }
-
   // Helper function to clean title (remove trailing period)
   const cleanTitle = (title: string) => {
     return title.endsWith('.') ? title.slice(0, -1) : title
+  }  // Helper function to create URL slug from title
+  const createSlugFromTitle = (title: string) => {
+    const cleaned = cleanTitle(title)
+    const result = cleaned
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '') // Remove special characters except spaces and hyphens
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+      .trim()
+    
+    console.log('🔗 Stock-news creating link:')
+    console.log('📰 Title:', title)
+    console.log('🏷️  Slug:', result)
+    console.log('🌐 URL will be: /berita/' + result)
+    console.log('---')
+    
+    return result
   }
 
   if (loading) {
@@ -356,7 +371,7 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
             {newsItems.map((news) => (
               <Card key={news._id.$oid} className="overflow-hidden h-full flex flex-col bg-background/50 dark:bg-card/50 border-secondary/30 dark:border-border/50 hover:shadow-md transition-shadow">
                 <CardHeader className="p-4">                  <CardTitle className="text-base leading-tight">
-                    <Link href={`/berita/${news._id.$oid}`} className="hover:text-primary transition-colors">
+                    <Link href={`/berita/${createSlugFromTitle(news.title)}`} className="hover:text-primary transition-colors">
                       {cleanTitle(news.title)}
                     </Link>
                   </CardTitle><CardDescription className="flex items-center justify-between text-xs">
@@ -389,7 +404,7 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
           <div className="space-y-4">
             {newsItems.slice(0, 3).map((news, index) => (
               <div key={index} className="group">
-                <div className="space-y-2">                  <Link href={`/berita/${news._id.$oid}`} className="block">
+                <div className="space-y-2">                  <Link href={`/berita/${createSlugFromTitle(news.title)}`} className="block">
                     <h3 className="font-medium hover:text-primary cursor-pointer group-hover:text-primary transition-colors dark:text-foreground">
                       {cleanTitle(news.title)}
                     </h3>
