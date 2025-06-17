@@ -393,24 +393,40 @@ export default function Dashboard() {
       <div className="flex flex-1">        <aside className="hidden md:block border-r bg-white/80 dark:bg-background/95 backdrop-blur-sm fixed top-16 left-0 w-[240px] h-[calc(100vh-64px)] z-40">
           <div className="flex flex-col h-full gap-2 p-4">            <nav className="grid gap-1 py-2">
               <Button
-                variant="ghost"
-                className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
-                asChild
+                variant={activeTab === "overview" ? "secondary" : "ghost"}
+                className={`justify-start gap-2 font-normal text-sm ${
+                  activeTab === "overview" 
+                    ? "bg-primary/10 hover:bg-primary/20 text-primary" 
+                    : "hover:bg-accent/10 hover:text-accent"
+                }`}
+                onClick={() => setActiveTab("overview")}
               >
-                <Link href="#">
-                  <LineChart className="h-4 w-4" />
-                  Saham
-                </Link>
+                <BarChart3 className="h-4 w-4" />
+                Overview
               </Button>
               <Button
-                variant="ghost"
-                className="justify-start gap-2 font-normal text-sm hover:bg-accent/10 hover:text-accent"
-                asChild
+                variant={activeTab === "stocks" ? "secondary" : "ghost"}
+                className={`justify-start gap-2 font-normal text-sm ${
+                  activeTab === "stocks" 
+                    ? "bg-primary/10 hover:bg-primary/20 text-primary" 
+                    : "hover:bg-accent/10 hover:text-accent"
+                }`}
+                onClick={() => setActiveTab("stocks")}
               >
-                <Link href="/berita">
-                  <Newspaper className="h-4 w-4" />
-                  Berita
-                </Link>
+                <LineChart className="h-4 w-4" />
+                Saham
+              </Button>
+              <Button
+                variant={activeTab === "news" ? "secondary" : "ghost"}
+                className={`justify-start gap-2 font-normal text-sm ${
+                  activeTab === "news" 
+                    ? "bg-primary/10 hover:bg-primary/20 text-primary" 
+                    : "hover:bg-accent/10 hover:text-accent"
+                }`}
+                onClick={() => setActiveTab("news")}
+              >
+                <Newspaper className="h-4 w-4" />
+                Berita
               </Button>
             </nav>
             <Separator className="bg-secondary/30" />
