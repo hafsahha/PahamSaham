@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
   ArrowDown,
   ArrowUp,
@@ -228,6 +228,17 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [financialData, setFinancialData] = useState<FinancialData[]>([])
   const [period, setPeriod] = useState<"daily" | "monthly" | "yearly">("yearly")
+
+  // pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  const paginatedEmiten = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return initialEmiten.slice(startIndex, endIndex);
+  }, [currentPage, initialEmiten]);
+  
 
   // Fetch daftar emiten saat komponen dimuat
   useEffect(() => {
@@ -602,7 +613,7 @@ export default function Dashboard() {
                             </TableCell>
                           </TableRow>
                         ) : (
-                          initialEmiten.map((emiten) => <StockRow key={emiten.ticker} emiten={emiten} />)
+                          paginatedEmiten.map((emiten) => <StockRow key={emiten.ticker} emiten={emiten} />)
                         )}
                       </TableBody>
                     </Table>
@@ -615,6 +626,29 @@ export default function Dashboard() {
                       Lihat Semua Saham
                     </Button>
                   </CardFooter>
+                  <div className="flex justify-center items-center gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Page {currentPage} of {Math.ceil(initialEmiten.length / itemsPerPage)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      disabled={currentPage === Math.ceil(initialEmiten.length / itemsPerPage)}
+                      onClick={() =>
+                        setCurrentPage((prev) =>
+                          Math.min(prev + 1, Math.ceil(initialEmiten.length / itemsPerPage))
+                        )
+                      }
+                    >
+                      Next
+                    </Button>
+                  </div>  
                 </Card>
               </TabsContent>
               <TabsContent value="comparison" className="space-y-4 slide-up">
