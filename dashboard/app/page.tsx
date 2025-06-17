@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import {
   ArrowDown,
   ArrowUp,
@@ -229,9 +229,16 @@ export default function Dashboard() {
   const [financialData, setFinancialData] = useState<FinancialData[]>([])
   const [period, setPeriod] = useState<"daily" | "monthly" | "yearly">("yearly")
 
-  // pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [activeTab, setActiveTab] = useState("overview")
+
+  // Function to switch to news tab
+  const handleShowAllNews = () => {
+    setActiveTab("news")
+  }
+  
+  const itemsPerPage = 20
 
   const paginatedEmiten = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -462,7 +469,7 @@ export default function Dashboard() {
                 <Button className="bg-accent hover:bg-accent/90 text-white">Refresh</Button>
               </div>
             </div>
-            <Tabs defaultValue="overview" className="space-y-4">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
               <TabsList className="bg-white/80 dark:bg-background/80 p-1">                <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-white">
                   Ringkasan
                 </TabsTrigger>
@@ -562,13 +569,12 @@ export default function Dashboard() {
                           <Separator className="bg-secondary/30 my-2" />
                         </div>
                       ) : (
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="space-y-4">                          <div className="grid grid-cols-2 gap-2 text-sm">
                             {[...Array(5)].map((_, i) => (
-                              <>
-                                <Skeleton key={`label-${i}`} className="h-4 w-12" />
-                                <Skeleton key={`value-${i}`} className="h-4 w-16 ml-auto" />
-                              </>
+                              <React.Fragment key={`skeleton-row-${i}`}>
+                                <Skeleton className="h-4 w-12" />
+                                <Skeleton className="h-4 w-16 ml-auto" />
+                              </React.Fragment>
                             ))}
                           </div>
                           <Separator className="bg-secondary/30" />                          <Separator className="bg-secondary/30 my-2" />
@@ -580,7 +586,7 @@ export default function Dashboard() {
                   <StockFinancials financialData={financialData} />
                   <FinancialChartCard financialData={financialData} />
                 </div>
-                <StockNews />
+                <StockNews onShowAllNews={handleShowAllNews} />
               </TabsContent>
               <TabsContent value="stocks" className="space-y-4 slide-up">
                 <Card className="bg-white/80 backdrop-blur-sm border-secondary/20 card-hover">

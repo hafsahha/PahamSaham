@@ -30,13 +30,20 @@ interface ApiResponse {
 
 interface StockNewsProps {
   fullPage?: boolean
+  onShowAllNews?: () => void
 }
 
-export default function StockNews({ fullPage = false }: StockNewsProps) {
+export default function StockNews({ fullPage = false, onShowAllNews }: StockNewsProps) {
   const [newsItems, setNewsItems] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isUsingFallback, setIsUsingFallback] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+
+  // Fix hydration by detecting client-side
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
   const fetchNews = async () => {
     try {
       setLoading(true)
@@ -96,8 +103,7 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
       } else {
         setError('❓ Terjadi kesalahan yang tidak diketahui.')
       }
-      
-      // Use fallback dummy data for development
+        // Use fallback dummy data for development
       console.log('🔄 Using fallback data...')
       setNewsItems(getFallbackData())
       setIsUsingFallback(true)
@@ -105,62 +111,22 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
       setLoading(false)
     }
   }
+
   useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        setLoading(true)
-        
-        // Add timeout and better error handling
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-        
-        const response = await fetch('http://localhost:5000/api/iqplus/', {
-          signal: controller.signal,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-        
-        clearTimeout(timeoutId)
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        
-        const data: ApiResponse = await response.json()
-        
-        // Check if data exists and has the expected structure
-        if (data && data.data && Array.isArray(data.data)) {
-          setNewsItems(data.data)
-          setError(null)
-        } else {
-          throw new Error('Invalid data format received from API')
-        }
-        
-      } catch (err) {
-        console.error('Error fetching news:', err)
-        
-        // Provide more specific error messages
-        if (err instanceof Error) {
-          if (err.name === 'AbortError') {
-            setError('Koneksi timeout. Silakan coba lagi nanti.')
-          } else if (err.message.includes('Failed to fetch')) {
-            setError('Tidak dapat terhubung ke server. Pastikan API server berjalan di http://localhost:5000')
-          } else {
-            setError(`Gagal memuat berita: ${err.message}`)
-          }
-        } else {
-          setError('Terjadi kesalahan yang tidak diketahui.')
-        }
-        
-        // Use fallback dummy data for development
-        setNewsItems(getFallbackData())
-      } finally {
-        setLoading(false)
+    let isMounted = true
+    
+    const initFetch = async () => {
+      if (isMounted) {
+        await fetchNews()
       }
     }
-
-    fetchNews()
+    
+    initFetch()
+    
+    // Cleanup function
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   // Fallback dummy data for development/testing
@@ -219,16 +185,28 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
     return () => {
       isMounted = false
     }
-  }, [])
-
-  // Helper function to format date
+  }, [])  // Helper function to format date (static to avoid hydration issues)
   const formatDate = (dateString: string) => {
+    // Use static relative time to avoid hydration mismatch
     try {
-      // Convert from "11/05/2025 21:41" format to relative time
+      // For demo/fallback data, return static values
+      if (dateString === "16/06/2025 10:00") return "2 jam yang lalu"
+      if (dateString === "16/06/2025 09:30") return "2 jam yang lalu" 
+      if (dateString === "16/06/2025 09:00") return "3 jam yang lalu"
+      
+      // For real API data, parse and calculate
       const [datePart, timePart] = dateString.split(' ')
+      if (!datePart || !timePart) return dateString
+      
       const [day, month, year] = datePart.split('/')
+      if (!day || !month || !year) return dateString
+      
+      // Create date object
       const newsDate = new Date(`${year}-${month}-${day}T${timePart}:00`)
-      const now = new Date()
+      if (isNaN(newsDate.getTime())) return dateString
+      
+      // Use client-side time only after hydration to avoid mismatch
+      const now = isClient ? new Date() : new Date('2025-06-17T12:00:00')
       const diffInHours = Math.floor((now.getTime() - newsDate.getTime()) / (1000 * 60 * 60))
       
       if (diffInHours < 1) {
@@ -243,7 +221,6 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
       return dateString
     }
   }
-
   // Helper function to get sentiment badge color
   const getSentimentColor = (sentimen: string) => {
     switch (sentimen) {
@@ -254,6 +231,11 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400 border-gray-300'
     }
+  }
+
+  // Helper function to clean title (remove trailing period)
+  const cleanTitle = (title: string) => {
+    return title.endsWith('.') ? title.slice(0, -1) : title
   }
 
   if (loading) {
@@ -373,15 +355,13 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {newsItems.map((news) => (
               <Card key={news._id.$oid} className="overflow-hidden h-full flex flex-col bg-background/50 dark:bg-card/50 border-secondary/30 dark:border-border/50 hover:shadow-md transition-shadow">
-                <CardHeader className="p-4">
-                  <CardTitle className="text-base leading-tight">
+                <CardHeader className="p-4">                  <CardTitle className="text-base leading-tight">
                     <Link href={`/berita/${news._id.$oid}`} className="hover:text-primary transition-colors">
-                      {news.title}
+                      {cleanTitle(news.title)}
                     </Link>
-                  </CardTitle>
-                  <CardDescription className="flex items-center justify-between text-xs">
+                  </CardTitle><CardDescription className="flex items-center justify-between text-xs">
                     <span className="capitalize">{news.publisher}</span>
-                    <span>{formatDate(news.date)}</span>
+                    <span suppressHydrationWarning>{formatDate(news.date)}</span>
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 flex-1 flex flex-col">
@@ -409,16 +389,14 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
           <div className="space-y-4">
             {newsItems.slice(0, 3).map((news, index) => (
               <div key={index} className="group">
-                <div className="space-y-2">
-                  <Link href={`/berita/${news._id.$oid}`} className="block">
+                <div className="space-y-2">                  <Link href={`/berita/${news._id.$oid}`} className="block">
                     <h3 className="font-medium hover:text-primary cursor-pointer group-hover:text-primary transition-colors dark:text-foreground">
-                      {news.title}
+                      {cleanTitle(news.title)}
                     </h3>
-                  </Link>
-                  <div className="flex items-center text-sm text-muted-foreground">
+                  </Link><div className="flex items-center text-sm text-muted-foreground">
                     <span className="capitalize">{news.publisher}</span>
                     <span className="mx-2">•</span>
-                    <span>{formatDate(news.date)}</span>
+                    <span suppressHydrationWarning>{formatDate(news.date)}</span>
                   </div>
                   <div className="flex flex-wrap gap-1 mt-2">
                     <Badge
@@ -438,14 +416,13 @@ export default function StockNews({ fullPage = false }: StockNewsProps) {
                 {index < 2 && <Separator className="mt-4 bg-secondary/30 dark:bg-border/50" />}
               </div>
             ))}
-          </div>        )}
-        {!fullPage && newsItems.length > 0 && (
+          </div>        )}        {!fullPage && newsItems.length > 0 && (
           <Button
             variant="outline"
             className="w-full mt-4 border-secondary/30 dark:border-border hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 dark:hover:text-primary hover:border-primary/50"
-            asChild
+            onClick={onShowAllNews}
           >
-            <Link href="/berita">Lihat Semua Berita</Link>
+            Lihat Semua Berita
           </Button>
         )}
         {newsItems.length === 0 && !loading && !error && (
