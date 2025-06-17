@@ -6,8 +6,17 @@ import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChevronLeft, ChevronRight, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, X, Plus, ChevronsUpDown, Check } from "lucide-react"
 import Link from "next/link"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+
+// Interface untuk tipe data dari API
+interface Emiten {
+  ticker: string
+  name: string
+}
 
 interface NewsItem {
   _id: {
@@ -35,20 +44,50 @@ interface StockNewsProps {
   onShowAllNews?: () => void
 }
 
+// Fungsi untuk fetch data emiten
+async function fetchEmiten(): Promise<Emiten[]> {
+  try {
+    const apiUrl = "http://localhost:5000/api/emiten"
+    const res = await fetch(apiUrl, { cache: "no-store" })
+    if (!res.ok) throw new Error(`Failed to fetch emiten: ${res.status} ${res.statusText}`)
+    const tickers: string[] = await res.json()
+    return tickers.map((ticker) => ({ ticker, name: ticker.split(".")[0] }))
+  } catch (error) {
+    console.error("Error fetching emitens:", error)
+    return [
+      { ticker: "BBRI.JK", name: "BBRI" },
+      { ticker: "TLKM.JK", name: "TLKM" },
+      { ticker: "ASII.JK", name: "ASII" },
+      { ticker: "BMRI.JK", name: "BMRI" },
+      { ticker: "BBCA.JK", name: "BBCA" }
+    ]
+  }
+}
+
 export default function StockNews({ fullPage = false, onShowAllNews }: StockNewsProps) {
   const [newsItems, setNewsItems] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isUsingFallback, setIsUsingFallback] = useState(false)
   const [isClient, setIsClient] = useState(false)
-    // Pagination and filter states for fullPage mode
+  // Pagination and filter states for fullPage mode
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedEmitens, setSelectedEmitens] = useState<string[]>([])
+  const [availableEmitens, setAvailableEmitens] = useState<Emiten[]>([])
+  const [open, setOpen] = useState(false)
   const itemsPerPage = fullPage ? 12 : 6
-
   // Fix hydration by detecting client-side
   useEffect(() => {
     setIsClient(true)
+  }, [])
+
+  // Fetch daftar emiten saat komponen dimuat
+  useEffect(() => {
+    async function loadEmitens() {
+      const fetchedEmitens = await fetchEmiten()
+      setAvailableEmitens(fetchedEmitens)
+    }
+    loadEmitens()
   }, [])
   const fetchNews = async () => {
     try {
@@ -282,31 +321,25 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
     return filteredNews.slice(startIndex, endIndex)
-  }, [filteredNews, currentPage, itemsPerPage, fullPage])
-
-  // Get unique emiten list for filter
-  const uniqueEmiten = useMemo(() => {
-    const emitens = Array.from(new Set(newsItems.map(item => item.emiten)))
-    return emitens.sort()
-  }, [newsItems])
-  // Reset pagination when filter changes
+  }, [filteredNews, currentPage, itemsPerPage, fullPage])  // Reset pagination when filter changes
   useEffect(() => {
     setCurrentPage(1)
   }, [selectedEmitens])
+
   // Helper functions for multi-select
-  const toggleEmiten = (emiten: string) => {
-    setSelectedEmitens(prev => 
-      prev.includes(emiten) 
-        ? prev.filter(e => e !== emiten)
-        : [...prev, emiten]
-    )
+  const handleAddEmiten = (emiten: string) => {
+    if (!selectedEmitens.includes(emiten) && selectedEmitens.length < 10) {
+      setSelectedEmitens(prev => [...prev, emiten])
+    }
+    setOpen(false)
+  }
+
+  const handleRemoveEmiten = (emiten: string) => {
+    setSelectedEmitens(prev => prev.filter(e => e !== emiten))
   }
 
   const clearAllFilters = () => {
     setSelectedEmitens([])
-  }
-  const selectAllEmitens = () => {
-    setSelectedEmitens(uniqueEmiten)
   }
 
   // Calculate total pages
@@ -425,67 +458,90 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
         
         {fullPage ? (
           // Full page with filters and pagination
-          <div className="space-y-4">            {/* Filter Controls */}
+          <div className="space-y-4">
+            {/* Filter Controls */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">Filter Emiten:</span>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={selectAllEmitens}
-                      disabled={selectedEmitens.length === uniqueEmiten.length}
-                    >
-                      Pilih Semua
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={clearAllFilters}
-                      disabled={selectedEmitens.length === 0}
-                    >
-                      Hapus Filter
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearAllFilters}
+                    disabled={selectedEmitens.length === 0}
+                  >
+                    Hapus Semua Filter
+                  </Button>
                 </div>
-                  {/* Selected emitens display */}
-                {selectedEmitens.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {selectedEmitens.map((emiten) => (
+                
+                {/* Selected emitens with remove button */}
+                <div className="flex flex-wrap gap-1">
+                  {selectedEmitens.map((emiten) => {
+                    const emitenData = availableEmitens.find(e => e.name === emiten || e.ticker === emiten)
+                    return (
                       <Badge
                         key={emiten}
                         variant="default"
                         className="cursor-pointer bg-primary text-primary-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                        onClick={() => toggleEmiten(emiten)}
                       >
-                        {emiten}
-                        <X className="h-3 w-3 ml-1" />
+                        {emitenData ? `${emitenData.name}` : emiten}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-4 w-4 rounded-full p-0 ml-1 hover:bg-red-500/10 hover:text-red-500"
+                          onClick={() => handleRemoveEmiten(emiten)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
                       </Badge>
-                    ))}
-                  </div>
-                )}
-                  {/* Available emitens */}
-                <div className="flex flex-wrap gap-1">
-                  {uniqueEmiten
-                    .filter(emiten => !selectedEmitens.includes(emiten))
-                    .map((emiten) => (
-                      <Badge
-                        key={emiten}
-                        variant="outline"
-                        className="cursor-pointer border-border text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
-                        onClick={() => toggleEmiten(emiten)}
-                      >
-                        {emiten}
-                      </Badge>
-                    ))}
-                </div>
-              </div>
-              
-              <div className="text-sm text-muted-foreground">
-                Menampilkan {paginatedNews.length} dari {filteredNews.length} berita
-                {selectedEmitens.length > 0 && ` untuk ${selectedEmitens.length} emiten`}
-              </div>
+                    )
+                  })}
+                  
+                  {/* Add emiten dropdown */}
+                  {selectedEmitens.length < 10 && (
+                    <Popover open={open} onOpenChange={setOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={open}
+                          className="border-dashed border-secondary/50 dark:border-border/50 hover:bg-accent/10 hover:text-accent h-8 text-xs"
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Tambah Emiten
+                          <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[200px] p-0">
+                        <Command>
+                          <CommandInput placeholder="Cari emiten..." className="text-xs" />
+                          <CommandList>
+                            <CommandEmpty className="text-xs">Emiten tidak ditemukan.</CommandEmpty>
+                            <CommandGroup>
+                              {availableEmitens.map((emiten) => (
+                                <CommandItem
+                                  key={emiten.ticker}
+                                  value={emiten.ticker}
+                                  onSelect={() => handleAddEmiten(emiten.name)}
+                                  disabled={selectedEmitens.includes(emiten.name)}
+                                  className="text-xs"
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-3 w-3",
+                                      selectedEmitens.includes(emiten.name) ? "opacity-100" : "opacity-0",
+                                    )}
+                                  />
+                                  {emiten.ticker} - {emiten.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>              </div>
             </div>
 
             {/* News Grid */}
