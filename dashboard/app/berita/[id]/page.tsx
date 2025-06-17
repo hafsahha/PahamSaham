@@ -228,9 +228,9 @@ export default function NewsDetailPage() {
     return (      <div className="container mx-auto p-4 md:p-6 max-w-4xl">
         <div className="mb-6">
           <Button variant="ghost" size="sm" className="mb-4" asChild>
-            <Link href="/?tab=news">
+            <Link href="/">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Kembali ke Daftar Berita
+              Kembali ke Dashboard
             </Link>
           </Button>
         </div>
@@ -240,7 +240,7 @@ export default function NewsDetailPage() {
             <p className="text-muted-foreground mb-6">
               Maaf, artikel yang Anda cari tidak ditemukan atau telah dihapus.
             </p>            <Button asChild>
-              <Link href="/?tab=news">Kembali ke Halaman Berita</Link>
+              <Link href="/">Kembali ke Dashboard</Link>
             </Button>
           </CardContent>
         </Card>
@@ -251,9 +251,9 @@ export default function NewsDetailPage() {
   return (    <div className="container mx-auto p-4 md:p-6 max-w-4xl">
       <div className="mb-6">
         <Button variant="ghost" size="sm" className="mb-4" asChild>
-          <Link href="/?tab=news">
+          <Link href="/">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Kembali ke Daftar Berita
+            Kembali ke Dashboard
           </Link>
         </Button>
       </div>
