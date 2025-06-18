@@ -56,18 +56,26 @@ def get_recent_links(category, hours=24, max_articles=None):
                 logger.info(f"Processing page: {url}")
                 driver.get(url)
                 
-                # Wait for the news section to load
-                news_section = WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.CLASS_NAME, "news")))
+                # Wait for the load_news div to be present
+                print("Waiting for load_news div to load... patiently")
+                load_news_div = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.ID, "load_news")))
                 
-                # Process articles on this page
-                articles = news_section.find_elements(By.TAG_NAME, "li")
+                # Find all anchor tags within the load_news div
+                links = load_news_div.find_elements(By.TAG_NAME, "a")
+                
+                # Process each link
                 page_has_recent_articles = False
                 
-                for article in articles:
+                for link_element in links:
                     try:
-                        # Extract the date text (format: DD/MM/YY - HH:MM)
-                        date_element = article.find_element(By.TAG_NAME, "b")
+                        href = link_element.get_attribute("href")
+                        if not href or "javascript" in href or "#" in href:
+                            continue  # Skip non-article links
+                            
+                        # Find the parent li element to get the date
+                        li_element = link_element.find_element(By.XPATH, "./..")
+                        date_element = li_element.find_element(By.TAG_NAME, "b")
                         date_text = date_element.text.strip()
                         
                         # Parse the date (day/month/year - hour:minute)
@@ -94,20 +102,17 @@ def get_recent_links(category, hours=24, max_articles=None):
                         
                         if should_add:
                             page_has_recent_articles = True
-                            link_element = article.find_element(By.TAG_NAME, "a")
-                            link = link_element.get_attribute("href")
-                            if link:
-                                recent_links.append(link)
-                                logger.info(f"Found article: {link} ({date_text})")
-                                
-                                # If we've reached the max count, stop
-                                if not time_mode and len(recent_links) >= max_articles:
-                                    logger.info(f"Reached target of {max_articles} articles, stopping")
-                                    should_continue = False
-                                    break
+                            recent_links.append(href)
+                            logger.info(f"Found article: {href} ({date_text})")
+                            
+                            # If we've reached the max count, stop
+                            if not time_mode and len(recent_links) >= max_articles:
+                                logger.info(f"Reached target of {max_articles} articles, stopping")
+                                should_continue = False
+                                break
                             
                     except Exception as e:
-                        logger.info(f"Error processing article on page {page}: {str(e)}")
+                        logger.info(f"Error processing link on page {page}: {str(e)}")
                         continue
                 
                 # If no more articles on this page, stop pagination
