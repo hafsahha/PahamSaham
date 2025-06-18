@@ -274,6 +274,37 @@ services:
       MONGO_COLLECTION: "iqplus_data"
       INPUT_PATH: /app/output/iqplus_output.json
 
+  # ========== image building services to make them available for Airflow ==========
+  # These services only build the images and exit - they don't stay running
+  build_extraction:
+    build:
+      context: .
+      dockerfile: extract/Dockerfile
+    image: extraction:latest
+    command: ["echo", "Extraction image built"]
+    deploy:
+      restart_policy:
+        condition: none
+
+  build_transformer:
+    build:
+      context: ./transform
+    image: transformer:latest
+    command: ["echo", "Transformer image built"]
+    deploy:
+      restart_policy:
+        condition: none
+
+  build_loader:
+    build:
+      context: ./load
+      dockerfile: Dockerfile
+    image: loader:latest
+    command: ["echo", "Loader image built"]
+    deploy:
+      restart_policy:
+        condition: none
+
 volumes:
   postgres-db:
     name: postgres_db
