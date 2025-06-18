@@ -24,4 +24,4 @@ RUN mkdir -p /opt/spark/jars && \
 COPY . /app
 WORKDIR /app
 
-CMD ["python", "idx_transform.py"]
+# CMD ["python", "idx_transform.py"]

@@ -16,5 +16,5 @@ ENV MONGO_URI="mongodb+srv://big3:daffzidliahafmail@dontsteal.3huq1f6.mongodb.ne
 ENV MONGO_DB="bigdata_saham"
 
 # Run the script
-CMD ["python", "yfinance_loader.py"]
+# CMD ["python", "yfinance_loader.py"]
 # CMD ["python", "loader.py"]
