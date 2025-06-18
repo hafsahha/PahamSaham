@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Interface untuk data dari API
 interface MarketData {
@@ -32,43 +32,60 @@ interface IndexData {
 }
 
 // Fungsi untuk fetch data dari API
+
+const SECTOR_CACHE_KEY = 'market-sectors-cache';
+
+// Fungsi untuk mendapatkan data dari cache
+function getSectorCachedData(): {data: MarketData[], timestamp: number} | null {
+  const cachedData = localStorage.getItem(SECTOR_CACHE_KEY);
+  if (!cachedData) return null;
+  return JSON.parse(cachedData);
+}
+
+// Fungsi untuk menyimpan data ke cache
+function setSectorCachedData(data: MarketData[]) {
+  const dataToCache = {
+    data,
+    timestamp: Date.now()
+  };
+  localStorage.setItem(SECTOR_CACHE_KEY, JSON.stringify(dataToCache));
+}
+
+// Fungsi untuk fetch data dari API (modifikasi)
 async function fetchMarketData(type: string): Promise<MarketData[]> {
   try {
-    // Gunakan endpoint khusus market-overview yang diperbarui
     const apiUrl = `http://localhost:5000/api/market-overview?type=${type}`;
-    
     const res = await fetch(apiUrl, { cache: 'no-store' });
     
     if (!res.ok) {
-      // Jika response status bukan 200 OK
       if (res.status === 404) {
         console.warn(`Data ${type} tidak tersedia`);
-        return []; // Return empty array instead of throwing error
+        return [];
       } else {
         throw new Error(`Failed to fetch ${type} data: ${res.status} ${res.statusText}`);
       }
     }
     
-    // Coba parsing response JSON
     let data = await res.json();
     
-    // Cek jika response adalah object dengan property 'status' = 'error'
     if (data && data.status === 'error') {
       console.warn(`API Error: ${data.message || 'Unknown error'}`);
-      return []; // Return empty array instead of throwing error
+      return [];
     }
     
-    // Cek jika data kosong atau tidak valid
     if (!data || !Array.isArray(data) || data.length === 0) {
       console.warn(`Tidak ada data ${type} tersedia`);
-      return []; // Return empty array instead of throwing error
+      return [];
     }
     
-    return data as MarketData[];  } catch (error) {
+    // Tambahkan timestamp ke data
+    return data.map((item: MarketData) => ({
+      ...item,
+      timestamp: Date.now()
+    }));
+  } catch (error) {
     console.error(`Error fetching ${type} data:`, error);
-    // Tidak menggunakan fallback data lagi dan tidak throw error
-    console.warn(`Gagal memuat data ${type}. Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    return []; // Return empty array instead of throwing error
+    return [];
   }
 }
 
@@ -100,27 +117,39 @@ const forexFallbackData: MarketData[] = [
   { name: "SGD/IDR", value: 11850, changePercent: 0.20 }
 ];
 
+
 export default function MarketOverview() {
-  const [sectorsData, setSectorsData] = useState<MarketData[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [errorMessages, setErrorMessages] = useState<{[key: string]: string}>({})
-  const [useFallbackData, setUseFallbackData] = useState<{[key: string]: boolean}>({})
+  const [sectorsData, setSectorsData] = useState<MarketData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessages, setErrorMessages] = useState<{[key: string]: string}>({});
+  const [useFallbackData, setUseFallbackData] = useState<{[key: string]: boolean}>({});
 
   // Fetch data saat komponen dimuat
   useEffect(() => {
     async function loadMarketData() {
-      setIsLoading(true)
+      setIsLoading(true);
       const errors: {[key: string]: string} = {};
       const fallbacks: {[key: string]: boolean} = {};
       
-      // Fungsi untuk menangani data sektor
+      // Cek cache terlebih dahulu
+      const cachedData = getSectorCachedData();
+      const cacheExpiry = 5 * 60 * 1000; // 5 menit dalam milidetik
+      
+      if (cachedData && (Date.now() - cachedData.timestamp) < cacheExpiry) {
+        // Gunakan data cache jika masih valid
+        setSectorsData(cachedData.data);
+        setIsLoading(false);
+        return;
+      }
+      
       async function fetchSectorData() {
         try {
           const data = await fetchMarketData("sectors");
           if (data.length > 0) {
+            // Simpan ke cache
+            setSectorCachedData(data);
             return data;
           } else {
-            // Data kosong, gunakan fallback
             console.warn(`Data sektor kosong, menggunakan data fallback`);
             fallbacks["sectors"] = true;
             return sectorFallbackData;
@@ -128,32 +157,27 @@ export default function MarketOverview() {
         } catch (err) {
           console.error(`Error loading sektor data:`, err);
           errors["sectors"] = err instanceof Error ? err.message : `Gagal memuat data sektor`;
-          
-          // Gunakan data fallback jika gagal fetch
           fallbacks["sectors"] = true;
           return sectorFallbackData;
         }
       }
       
-      // Fetch data sektor
       const sectors = await fetchSectorData();
       
-      // Set data dan error
       setSectorsData(sectors);
       setErrorMessages(errors);
       setUseFallbackData(fallbacks);
       setIsLoading(false);
     }
     
-    loadMarketData()
+    loadMarketData();
     
     // Refresh data setiap 5 menit
-    const intervalId = setInterval(() => {
-      loadMarketData()
-    }, 5 * 60 * 1000)
-    
-    return () => clearInterval(intervalId)
-  }, [])
+    const intervalId = setInterval(loadMarketData, 5 * 60 * 1000);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  
   // Format nilai untuk ditampilkan sesuai dengan konteks saham Indonesia
   const formatValue = (value: number, type: string) => {
     if (type === "commodities") {

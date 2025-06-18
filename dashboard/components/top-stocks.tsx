@@ -11,6 +11,27 @@ interface StockData {
   price: number
   change: number
   changePercent: number
+  timestamp?: number // Tambahkan timestamp untuk cache
+}
+
+// Cache key
+const CACHE_KEY = 'top-stocks-cache'
+
+// Fungsi untuk mendapatkan data dari cache
+function getCachedData(): {gainers: StockData[], losers: StockData[], timestamp: number} | null {
+  const cachedData = localStorage.getItem(CACHE_KEY)
+  if (!cachedData) return null
+  return JSON.parse(cachedData)
+}
+
+// Fungsi untuk menyimpan data ke cache
+function setCachedData(gainers: StockData[], losers: StockData[]) {
+  const dataToCache = {
+    gainers,
+    losers,
+    timestamp: Date.now()
+  }
+  localStorage.setItem(CACHE_KEY, JSON.stringify(dataToCache))
 }
 
 // Fungsi untuk fetch data dari API
@@ -23,15 +44,17 @@ async function fetchTopStocks(filter: string): Promise<StockData[]> {
     }
     const data = await res.json()
     
-    // Jika response adalah object dengan property 'status', berarti ada error
     if (data.status === 'error') {
       throw new Error(`API Error: ${data.message || 'Unknown error'}`)
     }
     
-    return data
-  }  catch (error) {
+    // Tambahkan timestamp ke setiap data
+    return data.map((item: StockData) => ({
+      ...item,
+      timestamp: Date.now()
+    }))
+  } catch (error) {
     console.error(`Error fetching top ${filter}:`, error)
-    // Return empty array on API failure - no fallback data
     return []
   }
 }
@@ -45,15 +68,36 @@ export default function TopStocks() {
   useEffect(() => {
     async function loadTopStocks() {
       setIsLoading(true)
+      
+      // Cek cache terlebih dahulu
+      const cachedData = getCachedData()
+      const cacheExpiry = 5 * 60 * 1000 // 5 menit dalam milidetik
+      
+      if (cachedData && (Date.now() - cachedData.timestamp) < cacheExpiry) {
+        // Gunakan data cache jika masih valid
+        setGainers(cachedData.gainers)
+        setLosers(cachedData.losers)
+        setIsLoading(false)
+        return
+      }
+      
+      // Jika cache tidak ada atau sudah expired, fetch dari API
       const [gainsData, lossesData] = await Promise.all([
         fetchTopStocks("gainers"),
         fetchTopStocks("losers")
       ])
+      
       setGainers(gainsData)
       setLosers(lossesData)
+      setCachedData(gainsData, lossesData)
       setIsLoading(false)
     }
+    
     loadTopStocks()
+    
+    // Refresh data setiap 1 menit
+    const intervalId = setInterval(loadTopStocks, 60 * 1000)
+    return () => clearInterval(intervalId)
   }, [])
 
   // Format nilai untuk ditampilkan
