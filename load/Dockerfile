@@ -15,6 +15,8 @@ COPY yfinance_loader.py .
 ENV MONGO_URI="mongodb+srv://big3:daffzidliahafmail@dontsteal.3huq1f6.mongodb.net/"
 ENV MONGO_DB="bigdata_saham"
 
-# Run the script
+# Default command (uncomment one of the below to set as default)
 # CMD ["python", "yfinance_loader.py"]
 # CMD ["python", "loader.py"]
+
+# Note: The actual command will be specified in docker-compose.yml

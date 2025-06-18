@@ -234,7 +234,7 @@ services:
         limits:
           memory: 10G
 
-  # ============================= LOADER ==============================
+  # ============================= LOADER ==============================  
   load_yfinance:
     profiles: ["dev"]
     build:
@@ -245,8 +245,19 @@ services:
     volumes:
       - ./output:/app/output
     environment:
+      MONGO_URI: "mongodb+srv://big3:daffzidliahafmail@dontsteal.3huq1f6.mongodb.net/"
+      MONGO_DB: "bigdata_saham"
       MONGO_COLLECTION: "yfinance_data_testing"
-      INPUT_PATH: /app/output/yfinance_output.json
+      INPUT_PATH: "/app/output/yfinance_output.json"
+    networks:
+      - saham_net
+    command: ["python", "-u", "yfinance_loader.py"]
+    tty: true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   load_idx:
     profiles: ["dev"]
