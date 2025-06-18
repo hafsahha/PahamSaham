@@ -1,5 +1,3 @@
-import docker
-import os
 from airflow import DAG
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
@@ -9,19 +7,7 @@ from datetime import datetime
 used_path = '/app/output/iqplus_data.json'
 mongo_coll = 'iqplus_data'
 
-# Mendapatkan path host yang benar dari mount container saat ini
-client = docker.from_env()
-
-# Dapatkan container saat ini berdasarkan hostname
-current_container = client.containers.get(os.environ['HOSTNAME'])
-for mount in current_container.attrs['Mounts']:
-    if mount['Destination'] == '/opt/airflow/output':
-        host_output_path = mount['Source']  # Path absolut di host
-        break
-else:
-    raise Exception("Mount point /opt/airflow/output not found in container")
-
-print("Host output path:", host_output_path)
+host_output_path = '/home/azureee/project/PahamSaham/output'
 
 default_args = {
     'owner': 'airflow',

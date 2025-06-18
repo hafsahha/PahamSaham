@@ -21,7 +21,7 @@ export default function StockTicker() {
     const fetchAllEmiten = async () => {
       try {
         // Ambil semua emiten dari API /api/emiten
-        const emitenResponse = await fetch("http://localhost:5000/api/emiten");
+        const emitenResponse = await fetch("http://20.189.76.140:5000/api/emiten");
         if (!emitenResponse.ok) {
           throw new Error("Failed to fetch emitens");
         }
@@ -33,7 +33,7 @@ export default function StockTicker() {
 
         // Ambil harga saham untuk 10 emiten
         const pricePromises = emitenList.map(async (emiten: string) => {
-          const priceResponse = await fetch(`http://localhost:5000/api/harga?emiten=${emiten}&period=daily`);
+          const priceResponse = await fetch(`http://20.189.76.140:5000/api/harga?emiten=${emiten}&period=daily`);
           if (!priceResponse.ok) {
             throw new Error(`Failed to fetch price for ${emiten}`);
           }

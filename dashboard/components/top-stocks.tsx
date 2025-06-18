@@ -37,7 +37,7 @@ function setCachedData(gainers: StockData[], losers: StockData[]) {
 // Fungsi untuk fetch data dari API
 async function fetchTopStocks(filter: string): Promise<StockData[]> {
   try {
-    const apiUrl = `http://localhost:5000/api/top-stocks?filter=${filter}&limit=5`
+    const apiUrl = `http://20.189.76.140:5000/api/top-stocks?filter=${filter}&limit=5`
     const res = await fetch(apiUrl, { cache: "no-store" })
     if (!res.ok) {
       throw new Error(`Failed to fetch top ${filter}: ${res.status} ${res.statusText}`)

@@ -1,5 +1,3 @@
-import docker
-import os
 from airflow import DAG
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
@@ -7,21 +5,9 @@ from datetime import datetime
 
 # set dsini yh ...
 used_path = '/app/output/yfinance_data.json'
-mongo_coll = 'yfinance_data'
+mongo_coll = 'yfinance_data_testing'
 
-# Mendapatkan path host yang benar dari mount container saat ini
-client = docker.from_env()
-
-# Dapatkan container saat ini berdasarkan hostname
-current_container = client.containers.get(os.environ['HOSTNAME'])
-for mount in current_container.attrs['Mounts']:
-    if mount['Destination'] == '/opt/airflow/output':
-        host_output_path = mount['Source'] 
-        break
-else:
-    raise Exception("Mount point /opt/airflow/output not found in container")
-
-print("Host output path:", host_output_path)
+host_output_path = '/home/azureee/project/PahamSaham/output'
 
 default_args = {
     'owner': 'airflow',
@@ -30,7 +16,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id='yfinance_pipeline',
+    dag_id='yfinance_pipeline_1',
     default_args=default_args,
     schedule_interval='@daily',
     catchup=False,

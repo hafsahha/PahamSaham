@@ -47,7 +47,7 @@ interface StockNewsProps {
 // Fungsi untuk fetch data emiten
 async function fetchEmiten(): Promise<Emiten[]> {
   try {
-    const apiUrl = "http://localhost:5000/api/emiten"
+    const apiUrl = "http://20.189.76.140:5000/api/emiten"
     const res = await fetch(apiUrl, { cache: "no-store" })
     if (!res.ok) throw new Error(`Failed to fetch emiten: ${res.status} ${res.statusText}`)
     const tickers: string[] = await res.json()
@@ -98,7 +98,7 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
       
       // Simple fetch without timeout first to test connectivity
       try {
-        const response = await fetch('http://localhost:5000/api/iqplus/', {
+        const response = await fetch('http://20.189.76.140:5000/api/iqplus/', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -139,7 +139,7 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
         if (err.message.includes('timeout')) {
           setError('Koneksi timeout. Menggunakan data demo.')
         } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-          setError('❌ Tidak dapat terhubung ke server. Pastikan API server berjalan di http://localhost:5000')
+          setError('❌ Tidak dapat terhubung ke server. Pastikan API server berjalan di http://20.189.76.140:5000')
         } else if (err.message.includes('ERR_CONNECTION_REFUSED')) {
           setError('🔌 Server tidak dapat dijangkau. Periksa apakah API server berjalan.')
         } else {
@@ -437,11 +437,11 @@ export default function StockNews({ fullPage = false, onShowAllNews }: StockNews
                 <div className="mt-2 text-xs text-orange-600 dark:text-orange-500">
                   💡 <strong>Troubleshooting:</strong>
                   <br />
-                  1. Pastikan API server berjalan di <code className="px-1 bg-orange-200 dark:bg-orange-800 rounded">http://localhost:5000</code>
+                  1. Pastikan API server berjalan di <code className="px-1 bg-orange-200 dark:bg-orange-800 rounded">http://20.189.76.140:5000</code>
                   <br />
                   2. Cek console browser untuk detail error
                   <br />
-                  3. Test manual: buka <code className="px-1 bg-orange-200 dark:bg-orange-800 rounded">http://localhost:5000/api/iqplus/</code> di browser
+                  3. Test manual: buka <code className="px-1 bg-orange-200 dark:bg-orange-800 rounded">http://20.189.76.140:5000/api/iqplus/</code> di browser
                 </div>
               </div>
               <Button

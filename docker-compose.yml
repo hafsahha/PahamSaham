@@ -21,6 +21,7 @@ services:
   airflow-init: # inisiasi database sama akun buat airflow
     container_name: airflow-init
     image: apache/airflow:2.6.3
+    user: "${AIRFLOW_UID}"
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,6 +50,9 @@ services:
   airflow-webserver: 
     container_name: airflow-webserver
     image: apache/airflow:2.6.3
+    user: "${AIRFLOW_UID}"
+    group_add:
+      - "${DOCKER_GID}"
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,6 +79,9 @@ services:
     container_name: airflow-scheduler
     image: apache/airflow:2.6.3
     command: airflow scheduler
+    user: "${AIRFLOW_UID}"
+    group_add:
+      - "${DOCKER_GID}"
     depends_on:
       postgres:
         condition: service_healthy

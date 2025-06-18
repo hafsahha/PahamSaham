@@ -54,7 +54,7 @@ function setSectorCachedData(data: MarketData[]) {
 // Fungsi untuk fetch data dari API (modifikasi)
 async function fetchMarketData(type: string): Promise<MarketData[]> {
   try {
-    const apiUrl = `http://localhost:5000/api/market-overview?type=${type}`;
+    const apiUrl = `http://20.189.76.140:5000/api/market-overview?type=${type}`;
     const res = await fetch(apiUrl, { cache: 'no-store' });
     
     if (!res.ok) {

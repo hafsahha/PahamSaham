@@ -30,7 +30,7 @@ interface PriceData {
 // Fungsi untuk fetch data emiten
 async function fetchEmiten(): Promise<Emiten[]> {
   try {
-    const apiUrl = "http://localhost:5000/api/emiten"
+    const apiUrl = "http://20.189.76.140:5000/api/emiten"
     const res = await fetch(apiUrl, { cache: "no-store" })
     if (!res.ok) throw new Error(`Failed to fetch emiten: ${res.status} ${res.statusText}`)
     const tickers: string[] = await res.json()
@@ -44,7 +44,7 @@ async function fetchEmiten(): Promise<Emiten[]> {
 // Fungsi untuk fetch data harga
 async function fetchPriceData(emiten: string, period: string): Promise<PriceData[]> {
   try {
-    const apiUrl = `http://localhost:5000/api/harga?emiten=${emiten}&period=${period}`
+    const apiUrl = `http://20.189.76.140:5000/api/harga?emiten=${emiten}&period=${period}`
     const res = await fetch(apiUrl, { cache: "no-store" })
     if (!res.ok) throw new Error("Failed to fetch price data")
     return await res.json()
