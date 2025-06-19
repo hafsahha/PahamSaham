@@ -180,8 +180,20 @@ services:
         python iqplus_extract.py --category market &&
         python iqplus_extract.py --category stock
       "
-
   # ================================== TRANSFORM =====================================
+  transform_yfinance:
+    profiles: ["dev"]
+    build:
+      context: ./transform 
+    image: transformer
+    container_name: transform_yfinance
+    volumes:
+      - ./output:/app/output 
+    environment:
+      OUTPUT_PATH: /app/output/yfinance_transformed.json
+      INPUT_PATH: /app/output/yfinance_output.json
+    command: ["python", "yfinance_transform.py"]
+
   transform_idx:
     profiles: ["dev"]
     build:
@@ -194,7 +206,7 @@ services:
     environment:
       OUTPUT_PATH: /app/output/idx_output.json
       INPUT_PATH: /app/output/idx_extracted
-    command: ["python", "idx_transform.py"]  
+    command: ["python", "idx_transform.py"]
 
   transform_iqplus:
     profiles: ["dev"]
@@ -255,7 +267,7 @@ services:
       MONGO_URI: "mongodb+srv://big3:daffzidliahafmail@dontsteal.3huq1f6.mongodb.net/"
       MONGO_DB: "bigdata_saham"
       MONGO_COLLECTION: "yfinance_data_testing"
-      INPUT_PATH: "/app/output/yfinance_output.json"
+      INPUT_PATH: "/app/output/yfinance_transformed.json"
     networks:
       - saham_net
     command: ["python", "-u", "yfinance_loader.py"]
