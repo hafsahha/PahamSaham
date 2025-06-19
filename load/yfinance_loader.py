@@ -5,7 +5,7 @@ import time
 import sys
 from datetime import datetime
 from pymongo import MongoClient, errors
-
+ 
 # Add immediate debug output to make sure script starts
 print("STARTING YFINANCE LOADER SCRIPT", flush=True)
 sys.stdout.flush()
